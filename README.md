@@ -55,6 +55,20 @@ Feature tests can be run quickly through the PHP container with SQLite:
 docker run --rm -u $(id -u):$(id -g) -v "$PWD":/app -w /app composer:2 sh -lc "DB_CONNECTION=sqlite DB_DATABASE=/app/database/testing.sqlite CACHE_STORE=array QUEUE_CONNECTION=sync SESSION_DRIVER=array php artisan test --testsuite=Feature"
 ```
 
+## Production Deployment
+
+Production uses a separate Docker stack so local Sail remains unchanged.
+
+- `compose.prod.yaml` builds two containers: `app` (`php-fpm`) and `web` (`nginx`)
+- the app persists uploads, logs, cache, sessions, and the SQLite database in the `fittrack_storage` volume
+- host `nginx` proxies public traffic to the Docker `web` container on `127.0.0.1:8080`
+
+Basic VPS flow:
+
+1. Copy `.env.production.example` to `.env.production` and set a real `APP_KEY`.
+2. Copy `docker/prod/host-nginx-fittrack.conf` into the server `nginx` site config.
+3. Run `scripts/deploy-vps.sh` from this machine to sync the project and rebuild the stack remotely.
+
 ## Main App Areas
 
 - API auth: `routes/api.php` and `app/Http/Controllers/Api/AuthController.php`

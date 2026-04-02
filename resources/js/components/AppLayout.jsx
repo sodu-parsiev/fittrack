@@ -33,11 +33,7 @@ export function AppLayout({ children }) {
         <div className="layout-shell">
             <div className="layout-shell__glow" />
             <div className="layout-shell__content">
-                <header className="layout-header">
-                    <div>
-                        <p className="layout-header__eyebrow">FitTrack</p>
-                    </div>
-
+                <header className="layout-header layout-header--controls-only">
                     <div className="layout-header__controls">
                         <LanguageSwitcher />
 
@@ -55,7 +51,7 @@ export function AppLayout({ children }) {
                                 <Link className="button button--ghost" to="/login">
                                     {t('common.logIn')}
                                 </Link>
-                                <Link className="button button--auto" to="/register">
+                                <Link className="button" to="/register">
                                     {t('common.createAccount')}
                                 </Link>
                             </div>

@@ -204,19 +204,31 @@ button {
     gap: 20px;
 }
 
+.layout-header--controls-only {
+    justify-content: flex-end;
+}
+
 .layout-header__controls {
     display: flex;
     align-items: center;
+    flex-wrap: nowrap;
     gap: 12px;
-    flex-wrap: wrap;
     justify-content: flex-end;
 }
 
 .layout-header__actions {
     display: flex;
+    flex: 1 1 auto;
     gap: 12px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: flex-end;
+    min-width: 0;
+}
+
+.layout-header__actions .button {
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: nowrap;
 }
 
 .layout-header__title {
@@ -952,6 +964,16 @@ button {
     .layout-header__controls {
         width: 100%;
         justify-content: space-between;
+        gap: 8px;
+    }
+
+    .layout-header__actions {
+        gap: 8px;
+    }
+
+    .layout-header__actions .button {
+        padding-inline: 12px;
+        font-size: 0.9rem;
     }
 
     .nav-strip {

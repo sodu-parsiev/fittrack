@@ -12,7 +12,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class ExerciseSetResource extends JsonResource
 {
     /**
-     * @return array<string, int|float|string|null>
+     * @return array<string, int|float|string|bool|null>
      */
     public function toArray(Request $request): array
     {
@@ -21,6 +21,7 @@ class ExerciseSetResource extends JsonResource
             'setNumber' => $this->set_number,
             'reps' => $this->reps,
             'weight' => (float) $this->weight,
+            'usesSelfWeight' => (bool) $this->uses_self_weight,
             'completedAt' => $this->completed_at?->toIso8601String(),
         ];
     }

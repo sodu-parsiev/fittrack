@@ -23,6 +23,7 @@ class StoreSessionExerciseRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:120'],
             'category' => ['required', Rule::enum(MuscleGroup::class)],
+            'uses_self_weight' => ['sometimes', 'boolean'],
             'current_weight' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
             'target_reps' => ['required', 'integer', 'min:1', 'max:100'],
         ];

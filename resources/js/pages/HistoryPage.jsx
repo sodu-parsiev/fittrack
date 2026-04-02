@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../bootstrap';
 import { getErrorMessage } from '../lib/errors';
+import { formatWeightLabel, formatWeightValue } from '../lib/exerciseWeight';
 import { formatMuscleGroup } from '../lib/muscleGroups';
 
 function formatDateTime(value) {
@@ -9,16 +10,6 @@ function formatDateTime(value) {
         dateStyle: 'medium',
         timeStyle: 'short',
     }).format(new Date(value));
-}
-
-function formatWeight(value) {
-    const numeric = Number(value ?? 0);
-
-    if (Number.isInteger(numeric)) {
-        return numeric.toString();
-    }
-
-    return numeric.toFixed(2).replace(/\.?0+$/, '');
 }
 
 export function HistoryPage() {
@@ -95,7 +86,7 @@ export function HistoryPage() {
                                 <div className="badge-row">
                                     <span className="badge">{session.exerciseCount} exercises</span>
                                     <span className="badge">{session.totalSets} sets</span>
-                                    <span className="badge">{formatWeight(session.totalVolume)} kg volume</span>
+                                    <span className="badge">{formatWeightValue(session.totalVolume)} kg volume</span>
                                 </div>
                             </summary>
 
@@ -106,14 +97,16 @@ export function HistoryPage() {
                                             <h4>{exercise.name}</h4>
                                             <span>
                                                 {exercise.categoryLabel ?? formatMuscleGroup(exercise.category)} · Target{' '}
-                                                {exercise.targetReps} reps, last weight {formatWeight(exercise.currentWeight)} kg
+                                                {exercise.targetReps} reps, last load{' '}
+                                                {formatWeightLabel(exercise.currentWeight, exercise.usesSelfWeight)}
                                             </span>
                                         </div>
 
                                         <ol className="set-list">
                                             {exercise.sets.map((set) => (
                                                 <li key={set.id}>
-                                                    Set {set.setNumber}: {set.reps} reps x {formatWeight(set.weight)} kg
+                                                    Set {set.setNumber}: {set.reps} reps x{' '}
+                                                    {formatWeightLabel(set.weight, set.usesSelfWeight)}
                                                 </li>
                                             ))}
                                         </ol>

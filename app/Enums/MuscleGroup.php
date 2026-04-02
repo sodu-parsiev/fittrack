@@ -12,6 +12,7 @@ enum MuscleGroup: string
     case Legs = 'legs';
     case Chest = 'chest';
     case Shoulders = 'shoulders';
+    case Cardio = 'cardio';
 
     /**
      * @return array<int, string>
@@ -33,6 +34,7 @@ enum MuscleGroup: string
             self::Legs => 'Legs',
             self::Chest => 'Chest',
             self::Shoulders => 'Shoulders',
+            self::Cardio => 'Cardio',
         };
     }
 }

@@ -23,7 +23,8 @@ class UpdateSessionExerciseRequest extends FormRequest
         return [
             'name' => ['sometimes', 'string', 'max:120'],
             'category' => ['sometimes', Rule::enum(MuscleGroup::class)],
-            'current_weight' => ['sometimes', 'numeric', 'min:0', 'max:999.99'],
+            'uses_self_weight' => ['sometimes', 'boolean'],
+            'current_weight' => ['sometimes', 'nullable', 'numeric', 'min:0', 'max:999.99'],
             'target_reps' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ];
     }

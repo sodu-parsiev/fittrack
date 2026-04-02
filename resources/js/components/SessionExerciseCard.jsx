@@ -1,14 +1,5 @@
 import { formatMuscleGroup } from '../lib/muscleGroups';
-
-function formatWeight(value) {
-    const numeric = Number(value ?? 0);
-
-    if (Number.isInteger(numeric)) {
-        return numeric.toString();
-    }
-
-    return numeric.toFixed(2).replace(/\.?0+$/, '');
-}
+import { formatWeightLabel } from '../lib/exerciseWeight';
 
 export function SessionExerciseCard({
     draft,
@@ -18,6 +9,7 @@ export function SessionExerciseCard({
     onDecreaseWeight,
     onIncreaseWeight,
     onRemoveExercise,
+    onToggleSelfWeight,
     saving,
 }) {
     const categoryLabel = exercise.categoryLabel ?? formatMuscleGroup(exercise.category);
@@ -51,8 +43,32 @@ export function SessionExerciseCard({
                 </div>
 
                 <div className="exercise-card__stat">
-                    <span className="exercise-card__stat-label">Current weight</span>
-                    <strong className="exercise-card__stat-value">{formatWeight(exercise.currentWeight)} kg</strong>
+                    <span className="exercise-card__stat-label">Current load</span>
+                    <strong className="exercise-card__stat-value">
+                        {formatWeightLabel(exercise.currentWeight, exercise.usesSelfWeight)}
+                    </strong>
+                </div>
+            </div>
+
+            <div className="field exercise-card__mode">
+                <span>Weight type</span>
+                <div className="choice-row" role="group" aria-label={`${exercise.name} weight type`}>
+                    <button
+                        className={`choice-chip ${!exercise.usesSelfWeight ? 'choice-chip--active' : ''}`}
+                        disabled={saving}
+                        onClick={() => onToggleSelfWeight(exercise, false)}
+                        type="button"
+                    >
+                        External weight
+                    </button>
+                    <button
+                        className={`choice-chip ${exercise.usesSelfWeight ? 'choice-chip--active' : ''}`}
+                        disabled={saving}
+                        onClick={() => onToggleSelfWeight(exercise, true)}
+                        type="button"
+                    >
+                        Self weight
+                    </button>
                 </div>
             </div>
 
@@ -67,27 +83,40 @@ export function SessionExerciseCard({
                     />
                 </label>
 
-                <label className="field field--strong">
-                    <span>Weight</span>
-                    <input
-                        type="number"
-                        min="0"
-                        step="0.5"
-                        value={draft?.weight ?? exercise.currentWeight}
-                        onChange={(event) => onChangeDraft(exercise.id, 'weight', event.target.value)}
-                    />
-                </label>
+                {exercise.usesSelfWeight ? (
+                    <div className="field field--strong field--readonly">
+                        <span>Load</span>
+                        <div className="field__static field__static--strong">Self weight</div>
+                    </div>
+                ) : (
+                    <label className="field field--strong">
+                        <span>Weight</span>
+                        <input
+                            type="number"
+                            min="0"
+                            step="0.5"
+                            value={draft?.weight ?? exercise.currentWeight}
+                            onChange={(event) => onChangeDraft(exercise.id, 'weight', event.target.value)}
+                        />
+                    </label>
+                )}
             </div>
 
-            <div className="exercise-card__actions" role="group" aria-label={`${exercise.name} actions`}>
-                <button
-                    className="button button--secondary button--compact"
-                    disabled={saving}
-                    onClick={() => onDecreaseWeight(exercise)}
-                    type="button"
-                >
-                    -2.5 kg
-                </button>
+            <div
+                className={`exercise-card__actions ${exercise.usesSelfWeight ? 'exercise-card__actions--single' : ''}`}
+                role="group"
+                aria-label={`${exercise.name} actions`}
+            >
+                {!exercise.usesSelfWeight ? (
+                    <button
+                        className="button button--secondary button--compact"
+                        disabled={saving}
+                        onClick={() => onDecreaseWeight(exercise)}
+                        type="button"
+                    >
+                        -2.5 kg
+                    </button>
+                ) : null}
 
                 <button
                     className="button button--compact exercise-card__complete"
@@ -98,14 +127,16 @@ export function SessionExerciseCard({
                     Complete set
                 </button>
 
-                <button
-                    className="button button--secondary button--compact"
-                    disabled={saving}
-                    onClick={() => onIncreaseWeight(exercise)}
-                    type="button"
-                >
-                    +2.5 kg
-                </button>
+                {!exercise.usesSelfWeight ? (
+                    <button
+                        className="button button--secondary button--compact"
+                        disabled={saving}
+                        onClick={() => onIncreaseWeight(exercise)}
+                        type="button"
+                    >
+                        +2.5 kg
+                    </button>
+                ) : null}
             </div>
 
             <div className="exercise-card__secondary">
@@ -123,7 +154,7 @@ export function SessionExerciseCard({
                 <ol className="set-list">
                     {exercise.sets.map((set) => (
                         <li key={set.id}>
-                            Set {set.setNumber}: {set.reps} reps x {formatWeight(set.weight)} kg
+                            Set {set.setNumber}: {set.reps} reps x {formatWeightLabel(set.weight, set.usesSelfWeight)}
                         </li>
                     ))}
                 </ol>

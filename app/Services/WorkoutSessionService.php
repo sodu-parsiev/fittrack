@@ -60,17 +60,20 @@ class WorkoutSessionService
     }
 
     /**
-     * @param  array{name: string, category: mixed, current_weight?: mixed, target_reps: mixed}  $attributes
+     * @param  array{name: string, category: mixed, current_weight?: mixed, uses_self_weight?: mixed, target_reps: mixed}  $attributes
      */
     public function createExercise(WorkoutSession $session, array $attributes): WorkoutSession
     {
         $this->ensureSessionIsActive($session);
 
+        $usesSelfWeight = $this->toBoolean($attributes['uses_self_weight'] ?? false);
+
         $session->sessionExercises()->create([
             'name' => $attributes['name'],
             'category' => $attributes['category'],
             'sort_order' => ((int) $session->sessionExercises()->max('sort_order')) + 1,
-            'current_weight' => $attributes['current_weight'] ?? 0,
+            'current_weight' => $this->resolveStoredWeight($usesSelfWeight, $attributes['current_weight'] ?? 0),
+            'uses_self_weight' => $usesSelfWeight,
             'target_reps' => $attributes['target_reps'],
         ]);
 
@@ -78,13 +81,27 @@ class WorkoutSessionService
     }
 
     /**
-     * @param  array{name?: mixed, category?: mixed, current_weight?: mixed, target_reps?: mixed}  $attributes
+     * @param  array{name?: mixed, category?: mixed, current_weight?: mixed, uses_self_weight?: mixed, target_reps?: mixed}  $attributes
      */
     public function updateExercise(SessionExercise $exercise, array $attributes): WorkoutSession
     {
         $this->ensureSessionIsActive($exercise->workoutSession);
 
-        $exercise->fill($attributes);
+        $updates = $attributes;
+
+        if (array_key_exists('uses_self_weight', $attributes)) {
+            $updates['uses_self_weight'] = $this->toBoolean($attributes['uses_self_weight']);
+
+            if ($updates['uses_self_weight']) {
+                $updates['current_weight'] = 0;
+            } elseif (array_key_exists('current_weight', $attributes)) {
+                $updates['current_weight'] = $this->resolveStoredWeight(false, $attributes['current_weight'] ?? 0);
+            }
+        } elseif (array_key_exists('current_weight', $attributes)) {
+            $updates['current_weight'] = $this->resolveStoredWeight((bool) $exercise->uses_self_weight, $attributes['current_weight'] ?? 0);
+        }
+
+        $exercise->fill($updates);
         $exercise->save();
 
         return $this->loadSession($exercise->workoutSession->fresh());
@@ -110,7 +127,7 @@ class WorkoutSessionService
     }
 
     /**
-     * @param  array{reps: mixed, weight: mixed}  $attributes
+     * @param  array{reps: mixed, weight?: mixed, uses_self_weight?: mixed}  $attributes
      */
     public function addSet(SessionExercise $exercise, array $attributes): WorkoutSession
     {
@@ -119,14 +136,21 @@ class WorkoutSessionService
         $this->ensureSessionIsActive($session);
 
         DB::transaction(function () use ($exercise, $attributes): void {
+            $usesSelfWeight = array_key_exists('uses_self_weight', $attributes)
+                ? $this->toBoolean($attributes['uses_self_weight'])
+                : (bool) $exercise->uses_self_weight;
+            $storedWeight = $this->resolveStoredWeight($usesSelfWeight, $attributes['weight'] ?? 0);
+
             $exercise->update([
-                'current_weight' => $attributes['weight'],
+                'current_weight' => $storedWeight,
+                'uses_self_weight' => $usesSelfWeight,
             ]);
 
             $exercise->exerciseSets()->create([
                 'set_number' => ((int) $exercise->exerciseSets()->max('set_number')) + 1,
                 'reps' => $attributes['reps'],
-                'weight' => $attributes['weight'],
+                'weight' => $storedWeight,
+                'uses_self_weight' => $usesSelfWeight,
                 'completed_at' => now(),
             ]);
         });
@@ -154,5 +178,15 @@ class WorkoutSessionService
                 'session' => 'Completed workouts cannot be modified.',
             ]);
         }
+    }
+
+    private function resolveStoredWeight(bool $usesSelfWeight, mixed $weight): float
+    {
+        return $usesSelfWeight ? 0.0 : (float) ($weight ?? 0);
+    }
+
+    private function toBoolean(mixed $value): bool
+    {
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
 }

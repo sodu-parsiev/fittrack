@@ -39,7 +39,8 @@ class WorkoutSessionApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('exerciseCount', 1)
             ->assertJsonPath('exercises.0.name', 'Smith Bench')
-            ->assertJsonPath('exercises.0.category', 'chest');
+            ->assertJsonPath('exercises.0.category', 'chest')
+            ->assertJsonPath('exercises.0.usesSelfWeight', false);
 
         $exerciseId = $exerciseResponse->json('exercises.0.id');
 
@@ -53,7 +54,8 @@ class WorkoutSessionApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('totalSets', 1)
             ->assertJsonPath('exercises.0.currentWeight', 62.5)
-            ->assertJsonPath('exercises.0.sets.0.weight', 62.5);
+            ->assertJsonPath('exercises.0.sets.0.weight', 62.5)
+            ->assertJsonPath('exercises.0.sets.0.usesSelfWeight', false);
 
         $historyResponse = $this->actingAs($user, 'sanctum')
             ->patchJson("/api/sessions/{$sessionId}", [
@@ -71,6 +73,59 @@ class WorkoutSessionApiTest extends TestCase
             ->assertJsonCount(1)
             ->assertJsonPath('0.totalSets', 1)
             ->assertJsonPath('0.exercises.0.category', 'chest');
+    }
+
+    public function test_user_can_create_and_log_a_cardio_self_weight_exercise(): void
+    {
+        $user = User::factory()->create();
+
+        $sessionResponse = $this->actingAs($user, 'sanctum')
+            ->postJson('/api/sessions');
+
+        $sessionId = $sessionResponse->json('id');
+
+        $exerciseResponse = $this->actingAs($user, 'sanctum')
+            ->postJson("/api/sessions/{$sessionId}/exercises", [
+                'name' => 'Incline Walk',
+                'category' => 'cardio',
+                'uses_self_weight' => true,
+                'target_reps' => 1,
+            ]);
+
+        $exerciseResponse
+            ->assertOk()
+            ->assertJsonPath('exercises.0.category', 'cardio')
+            ->assertJsonPath('exercises.0.categoryLabel', 'Cardio')
+            ->assertJsonPath('exercises.0.usesSelfWeight', true)
+            ->assertJsonPath('exercises.0.currentWeight', 0);
+
+        $exerciseId = $exerciseResponse->json('exercises.0.id');
+
+        $setResponse = $this->actingAs($user, 'sanctum')
+            ->postJson("/api/exercises/{$exerciseId}/sets", [
+                'reps' => 1,
+                'uses_self_weight' => true,
+            ]);
+
+        $setResponse
+            ->assertOk()
+            ->assertJsonPath('totalSets', 1)
+            ->assertJsonPath('exercises.0.usesSelfWeight', true)
+            ->assertJsonPath('exercises.0.sets.0.weight', 0)
+            ->assertJsonPath('exercises.0.sets.0.usesSelfWeight', true);
+
+        $this->actingAs($user, 'sanctum')
+            ->patchJson("/api/sessions/{$sessionId}", [
+                'status' => 'completed',
+            ])
+            ->assertOk();
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/sessions?status=completed')
+            ->assertOk()
+            ->assertJsonPath('0.exercises.0.category', 'cardio')
+            ->assertJsonPath('0.exercises.0.usesSelfWeight', true)
+            ->assertJsonPath('0.exercises.0.sets.0.usesSelfWeight', true);
     }
 
     public function test_completed_session_cannot_be_modified(): void

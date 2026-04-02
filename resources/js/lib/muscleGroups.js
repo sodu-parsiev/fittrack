@@ -5,6 +5,7 @@ export const MUSCLE_GROUP_OPTIONS = [
     { value: 'legs', label: 'Legs' },
     { value: 'chest', label: 'Chest' },
     { value: 'shoulders', label: 'Shoulders' },
+    { value: 'cardio', label: 'Cardio' },
 ];
 
 export function formatMuscleGroup(value) {

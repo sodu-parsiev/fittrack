@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../bootstrap';
 import { SessionExerciseCard } from '../components/SessionExerciseCard';
 import { getErrorMessage } from '../lib/errors';
+import { formatWeightValue } from '../lib/exerciseWeight';
 import { MUSCLE_GROUP_OPTIONS } from '../lib/muscleGroups';
 
 const REST_SECONDS_STORAGE_KEY = 'fittrack_rest_seconds';
@@ -16,16 +17,6 @@ function readInitialRestSeconds() {
     }
 
     return storedValue;
-}
-
-function formatWeight(value) {
-    const numeric = Number(value ?? 0);
-
-    if (Number.isInteger(numeric)) {
-        return numeric.toString();
-    }
-
-    return numeric.toFixed(2).replace(/\.?0+$/, '');
 }
 
 function roundWeight(value) {
@@ -60,6 +51,20 @@ function formatTimerValue(value) {
     return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
+function buildDraftSet(exercise, currentDraft = null) {
+    return {
+        reps: currentDraft?.reps ?? String(exercise.targetReps),
+        weight: currentDraft?.weight ?? String(exercise.currentWeight),
+    };
+}
+
+function resetDraftAfterSet(exercise, currentDraft = null) {
+    return {
+        reps: String(exercise.targetReps),
+        weight: exercise.usesSelfWeight ? currentDraft?.weight ?? String(exercise.currentWeight) : String(exercise.currentWeight),
+    };
+}
+
 export function WorkoutPage() {
     const navigate = useNavigate();
     const [activeSession, setActiveSession] = useState(null);
@@ -67,6 +72,7 @@ export function WorkoutPage() {
     const [exerciseForm, setExerciseForm] = useState({
         name: '',
         category: '',
+        usesSelfWeight: false,
         currentWeight: '',
         targetReps: '8',
     });
@@ -93,10 +99,7 @@ export function WorkoutPage() {
             const next = {};
 
             activeSession.exercises.forEach((exercise) => {
-                next[exercise.id] = current[exercise.id] ?? {
-                    reps: String(exercise.targetReps),
-                    weight: String(exercise.currentWeight),
-                };
+                next[exercise.id] = buildDraftSet(exercise, current[exercise.id]);
             });
 
             return next;
@@ -181,7 +184,8 @@ export function WorkoutPage() {
             const response = await api.post(`/api/sessions/${activeSession.id}/exercises`, {
                 name: exerciseForm.name.trim(),
                 category: exerciseForm.category,
-                current_weight: Number(exerciseForm.currentWeight || 0),
+                uses_self_weight: exerciseForm.usesSelfWeight,
+                current_weight: exerciseForm.usesSelfWeight ? null : Number(exerciseForm.currentWeight || 0),
                 target_reps: Number(exerciseForm.targetReps || 8),
             });
 
@@ -189,6 +193,7 @@ export function WorkoutPage() {
             setExerciseForm({
                 name: '',
                 category: '',
+                usesSelfWeight: false,
                 currentWeight: '',
                 targetReps: '8',
             });
@@ -211,6 +216,10 @@ export function WorkoutPage() {
     }
 
     async function updateExerciseWeight(exercise, delta) {
+        if (exercise.usesSelfWeight) {
+            return;
+        }
+
         setSaving(true);
         setError('');
         setNotice('');
@@ -220,7 +229,17 @@ export function WorkoutPage() {
                 current_weight: roundWeight(Number(exercise.currentWeight) + delta),
             });
 
-            setActiveSession(response.data);
+            const updatedSession = response.data;
+            const updatedExercise = updatedSession.exercises.find((item) => item.id === exercise.id);
+
+            setActiveSession(updatedSession);
+            setDraftSets((current) => ({
+                ...current,
+                [exercise.id]: {
+                    ...current[exercise.id],
+                    weight: String(updatedExercise?.currentWeight ?? roundWeight(Number(exercise.currentWeight) + delta)),
+                },
+            }));
         } catch (requestError) {
             setError(getErrorMessage(requestError, 'Unable to update the weight.'));
         } finally {
@@ -228,20 +247,21 @@ export function WorkoutPage() {
         }
     }
 
-    async function completeSet(exercise) {
-        const draft = draftSets[exercise.id] ?? {
-            reps: exercise.targetReps,
-            weight: exercise.currentWeight,
-        };
+    async function updateExerciseWeightType(exercise, usesSelfWeight) {
+        if (exercise.usesSelfWeight === usesSelfWeight) {
+            return;
+        }
+
+        const draft = draftSets[exercise.id];
 
         setSaving(true);
         setError('');
         setNotice('');
 
         try {
-            const response = await api.post(`/api/exercises/${exercise.id}/sets`, {
-                reps: Number(draft.reps),
-                weight: Number(draft.weight),
+            const response = await api.patch(`/api/exercises/${exercise.id}`, {
+                uses_self_weight: usesSelfWeight,
+                current_weight: usesSelfWeight ? 0 : Number(draft?.weight || exercise.currentWeight || 0),
             });
 
             const updatedSession = response.data;
@@ -250,10 +270,41 @@ export function WorkoutPage() {
             setActiveSession(updatedSession);
             setDraftSets((current) => ({
                 ...current,
-                [exercise.id]: {
-                    reps: String(updatedExercise?.targetReps ?? exercise.targetReps),
-                    weight: String(updatedExercise?.currentWeight ?? draft.weight),
-                },
+                [exercise.id]: buildDraftSet(updatedExercise ?? exercise, current[exercise.id]),
+            }));
+        } catch (requestError) {
+            setError(getErrorMessage(requestError, 'Unable to update the weight type.'));
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    async function completeSet(exercise) {
+        const draft = draftSets[exercise.id] ?? buildDraftSet(exercise);
+
+        setSaving(true);
+        setError('');
+        setNotice('');
+
+        try {
+            const payload = {
+                reps: Number(draft.reps),
+                uses_self_weight: exercise.usesSelfWeight,
+            };
+
+            if (!exercise.usesSelfWeight) {
+                payload.weight = Number(draft.weight);
+            }
+
+            const response = await api.post(`/api/exercises/${exercise.id}/sets`, payload);
+
+            const updatedSession = response.data;
+            const updatedExercise = updatedSession.exercises.find((item) => item.id === exercise.id);
+
+            setActiveSession(updatedSession);
+            setDraftSets((current) => ({
+                ...current,
+                [exercise.id]: resetDraftAfterSet(updatedExercise ?? exercise, current[exercise.id]),
             }));
             startTimer();
             setNotice('Set saved.');
@@ -365,7 +416,7 @@ export function WorkoutPage() {
     const timerDisplayLabel = timerFinished ? 'Done' : formatTimerValue(timeLeft);
 
     return (
-        <div className="stack stack--page">
+        <div className={`stack stack--page ${activeSession ? 'stack--page-with-utility' : ''}`.trim()}>
             <section className="page-header">
                 <div>
                     <p className="page-header__eyebrow">Active workout</p>
@@ -476,6 +527,7 @@ export function WorkoutPage() {
                                         onDecreaseWeight={(selectedExercise) => updateExerciseWeight(selectedExercise, -2.5)}
                                         onIncreaseWeight={(selectedExercise) => updateExerciseWeight(selectedExercise, 2.5)}
                                         onRemoveExercise={removeExercise}
+                                        onToggleSelfWeight={updateExerciseWeightType}
                                         saving={saving}
                                     />
                                 ))}
@@ -500,7 +552,7 @@ export function WorkoutPage() {
                         </article>
                         <article className="metric-pill">
                             <span className="metric-pill__label">Volume</span>
-                            <strong className="metric-pill__value">{formatWeight(activeSession.totalVolume)} kg</strong>
+                            <strong className="metric-pill__value">{formatWeightValue(activeSession.totalVolume)} kg</strong>
                         </article>
                     </section>
 
@@ -544,10 +596,37 @@ export function WorkoutPage() {
                                 </select>
                             </label>
 
+                            <div className="field">
+                                <span>Weight type</span>
+                                <div className="choice-row" role="group" aria-label="Exercise weight type">
+                                    <button
+                                        className={`choice-chip ${!exerciseForm.usesSelfWeight ? 'choice-chip--active' : ''}`}
+                                        onClick={() => setExerciseForm((current) => ({
+                                            ...current,
+                                            usesSelfWeight: false,
+                                        }))}
+                                        type="button"
+                                    >
+                                        External weight
+                                    </button>
+                                    <button
+                                        className={`choice-chip ${exerciseForm.usesSelfWeight ? 'choice-chip--active' : ''}`}
+                                        onClick={() => setExerciseForm((current) => ({
+                                            ...current,
+                                            usesSelfWeight: true,
+                                        }))}
+                                        type="button"
+                                    >
+                                        Self weight
+                                    </button>
+                                </div>
+                            </div>
+
                             <div className="field-row workout-form__pair">
                                 <label className="field">
                                     <span>Weight (kg)</span>
                                     <input
+                                        disabled={exerciseForm.usesSelfWeight}
                                         min="0"
                                         step="0.5"
                                         type="number"
@@ -557,6 +636,9 @@ export function WorkoutPage() {
                                             currentWeight: event.target.value,
                                         }))}
                                     />
+                                    {exerciseForm.usesSelfWeight ? (
+                                        <small className="field__hint">Bodyweight exercise. Logged sets will show Self weight.</small>
+                                    ) : null}
                                 </label>
 
                                 <label className="field">
@@ -581,14 +663,88 @@ export function WorkoutPage() {
                 </>
             )}
 
-            <div className="scroll-dock" aria-label="Scroll controls">
-                <button className="scroll-dock__button" onClick={scrollToTop} type="button">
-                    Top
-                </button>
-                <button className="scroll-dock__button" onClick={scrollToBottom} type="button">
-                    Bottom
-                </button>
-            </div>
+            {activeSession ? (
+                <>
+                    <div className="scroll-dock" aria-label="Scroll controls">
+                        <button className="scroll-dock__button" onClick={scrollToTop} type="button">
+                            Top
+                        </button>
+                        <button className="scroll-dock__button" onClick={scrollToBottom} type="button">
+                            Bottom
+                        </button>
+                    </div>
+
+                    <section className="workout-utility-bar" aria-label="Workout utilities">
+                        <div className="workout-utility-bar__top">
+                            <div className="workout-utility-bar__meta">
+                                <span className="floating-timer__label">Rest timer</span>
+                                <span className="floating-timer__status">{timerStatusLabel}</span>
+                            </div>
+
+                            <div className="workout-utility-bar__display" aria-live="polite">
+                                {timerDisplayLabel}
+                            </div>
+
+                            <div className="workout-utility-bar__scroll" role="group" aria-label="Scroll controls">
+                                <button
+                                    className="button button--ghost button--compact workout-utility-bar__scroll-button"
+                                    onClick={scrollToTop}
+                                    type="button"
+                                >
+                                    Top
+                                </button>
+                                <button
+                                    className="button button--ghost button--compact workout-utility-bar__scroll-button"
+                                    onClick={scrollToBottom}
+                                    type="button"
+                                >
+                                    Bottom
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="workout-utility-bar__bottom">
+                            <label className="field workout-utility-bar__field">
+                                <span>Seconds</span>
+                                <input
+                                    inputMode="numeric"
+                                    min="1"
+                                    type="number"
+                                    value={restSeconds}
+                                    onChange={handleRestSecondsChange}
+                                />
+                            </label>
+
+                            <div className="workout-utility-bar__actions" role="group" aria-label="Rest timer controls">
+                                <button
+                                    className="button button--compact"
+                                    disabled={timerRunning || restSeconds < 1}
+                                    onClick={startTimer}
+                                    type="button"
+                                >
+                                    {timerStartLabel}
+                                </button>
+                                <button
+                                    className="button button--secondary button--compact"
+                                    disabled={!timerRunning}
+                                    onClick={pauseTimer}
+                                    type="button"
+                                >
+                                    Pause
+                                </button>
+                                <button
+                                    className="button button--danger-soft button--compact"
+                                    disabled={!timerCanReset}
+                                    onClick={resetTimer}
+                                    type="button"
+                                >
+                                    Reset
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+                </>
+            ) : null}
         </div>
     );
 }

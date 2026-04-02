@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['session_exercise_id', 'set_number', 'reps', 'weight', 'completed_at'])]
+#[Fillable(['session_exercise_id', 'set_number', 'reps', 'weight', 'uses_self_weight', 'completed_at'])]
 class ExerciseSet extends Model
 {
     use HasFactory;
@@ -18,6 +18,7 @@ class ExerciseSet extends Model
     {
         return [
             'weight' => 'decimal:2',
+            'uses_self_weight' => 'boolean',
             'completed_at' => 'datetime',
         ];
     }

@@ -231,6 +231,20 @@ button {
     white-space: nowrap;
 }
 
+.layout-header__auth-link {
+    flex: 0 0 58px;
+    width: 58px;
+    min-width: 58px;
+    min-height: 58px;
+    padding: 0;
+}
+
+.layout-header__auth-icon {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+}
+
 .layout-header__title {
     font-size: clamp(2rem, 3vw, 3.2rem);
 }
@@ -974,6 +988,13 @@ button {
     .layout-header__actions .button {
         padding-inline: 12px;
         font-size: 0.9rem;
+    }
+
+    .layout-header__auth-link {
+        flex-basis: 52px;
+        width: 52px;
+        min-width: 52px;
+        min-height: 52px;
     }
 
     .nav-strip {

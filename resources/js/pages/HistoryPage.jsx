@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../bootstrap';
+import { useTranslation } from '../contexts/LanguageContext';
 import { getErrorMessage } from '../lib/errors';
 import { formatWeightLabel, formatWeightValue } from '../lib/exerciseWeight';
 import { formatMuscleGroup } from '../lib/muscleGroups';
 
-function formatDateTime(value) {
-    return new Intl.DateTimeFormat(undefined, {
+function formatDateTime(value, locale) {
+    return new Intl.DateTimeFormat(locale, {
         dateStyle: 'medium',
         timeStyle: 'short',
     }).format(new Date(value));
 }
 
 export function HistoryPage() {
+    const { language, locale, t } = useTranslation();
     const [sessions, setSessions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -32,7 +34,7 @@ export function HistoryPage() {
 
             setSessions(response.data);
         } catch (requestError) {
-            setError(getErrorMessage(requestError, 'Unable to load your session history.'));
+            setError(getErrorMessage(requestError, t('history.unableToLoad')));
         } finally {
             setLoading(false);
         }
@@ -40,35 +42,20 @@ export function HistoryPage() {
 
     return (
         <div className="stack stack--page">
-            <section className="page-header">
-                <div>
-                    <p className="page-header__eyebrow">Session history</p>
-                    <h2 className="page-header__title">Every completed workout, ordered newest first</h2>
-                </div>
-            </section>
-
             {error ? <p className="status-banner status-banner--error">{error}</p> : null}
 
             {loading ? (
                 <section className="panel">
                     <div className="panel__header">
-                        <h3 className="panel__title">Loading saved sessions</h3>
-                        <p className="panel__subtitle">Pulling your workout history from the database.</p>
+                        <h3 className="panel__title">{t('common.loading')}</h3>
                     </div>
                 </section>
             ) : null}
 
             {!loading && sessions.length === 0 ? (
                 <section className="panel empty-state">
-                    <div className="panel__header">
-                        <h3 className="panel__title">No completed sessions yet</h3>
-                        <p className="panel__subtitle">
-                            Finish a workout and it will show up here with exercises, sets, and total volume.
-                        </p>
-                    </div>
-
                     <Link className="button" to="/app/workout">
-                        Start your first workout
+                        {t('history.startWorkout')}
                     </Link>
                 </section>
             ) : null}
@@ -79,14 +66,19 @@ export function HistoryPage() {
                         <details className="history-card" key={session.id} open={index === 0}>
                             <summary>
                                 <div>
-                                    <p className="history-card__eyebrow">{formatDateTime(session.startedAt)}</p>
-                                    <h3>{session.title || 'Completed workout'}</h3>
+                                    <p className="history-card__eyebrow">{formatDateTime(session.startedAt, locale)}</p>
+                                    <h3>{session.title || t('history.completedWorkout')}</h3>
                                 </div>
 
                                 <div className="badge-row">
-                                    <span className="badge">{session.exerciseCount} exercises</span>
-                                    <span className="badge">{session.totalSets} sets</span>
-                                    <span className="badge">{formatWeightValue(session.totalVolume)} kg volume</span>
+                                    <span className="badge">{t('history.exercisesBadge', { count: session.exerciseCount })}</span>
+                                    <span className="badge">{t('history.setsBadge', { count: session.totalSets })}</span>
+                                    <span className="badge">
+                                        {t('history.volumeBadge', {
+                                            unit: t('common.kg'),
+                                            value: formatWeightValue(session.totalVolume, locale),
+                                        })}
+                                    </span>
                                 </div>
                             </summary>
 
@@ -96,17 +88,26 @@ export function HistoryPage() {
                                         <div className="history-exercise__header">
                                             <h4>{exercise.name}</h4>
                                             <span>
-                                                {exercise.categoryLabel ?? formatMuscleGroup(exercise.category)} · Target{' '}
-                                                {exercise.targetReps} reps, last load{' '}
-                                                {formatWeightLabel(exercise.currentWeight, exercise.usesSelfWeight)}
+                                                {t('history.exerciseSummary', {
+                                                    category: formatMuscleGroup(exercise.category, language),
+                                                    targetReps: exercise.targetReps,
+                                                    weight: formatWeightLabel(
+                                                        exercise.currentWeight,
+                                                        exercise.usesSelfWeight,
+                                                        language,
+                                                    ),
+                                                })}
                                             </span>
                                         </div>
 
                                         <ol className="set-list">
                                             {exercise.sets.map((set) => (
                                                 <li key={set.id}>
-                                                    Set {set.setNumber}: {set.reps} reps x{' '}
-                                                    {formatWeightLabel(set.weight, set.usesSelfWeight)}
+                                                    {t('history.setEntry', {
+                                                        number: set.setNumber,
+                                                        reps: set.reps,
+                                                        weight: formatWeightLabel(set.weight, set.usesSelfWeight, language),
+                                                    })}
                                                 </li>
                                             ))}
                                         </ol>

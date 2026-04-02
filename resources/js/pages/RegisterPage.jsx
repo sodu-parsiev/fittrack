@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthShell } from '../components/AuthShell';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../contexts/LanguageContext';
 
 export function RegisterPage() {
     const navigate = useNavigate();
     const { register } = useAuth();
+    const { t } = useTranslation();
     const [form, setForm] = useState({
         name: '',
         email: '',
@@ -33,17 +35,14 @@ export function RegisterPage() {
     return (
         <AuthShell
             alternateHref="/login"
-            alternateLabel="Log in"
-            alternateText="Already have an account?"
-            eyebrow="Session History"
-            subtitle="Create a private account to keep your workouts, completed sets, and rest timing in one place."
-            title="Start tracking sessions properly"
+            alternateLabel={t('common.logIn')}
+            title={t('auth.registerTitle')}
         >
             <form className="stack" onSubmit={handleSubmit}>
                 {error ? <p className="status-banner status-banner--error">{error}</p> : null}
 
                 <label className="field">
-                    <span>Name</span>
+                    <span>{t('common.name')}</span>
                     <input
                         autoComplete="name"
                         required
@@ -54,7 +53,7 @@ export function RegisterPage() {
                 </label>
 
                 <label className="field">
-                    <span>Email</span>
+                    <span>{t('common.email')}</span>
                     <input
                         autoComplete="email"
                         required
@@ -66,7 +65,7 @@ export function RegisterPage() {
 
                 <div className="field-row">
                     <label className="field">
-                        <span>Password</span>
+                        <span>{t('common.password')}</span>
                         <input
                             autoComplete="new-password"
                             required
@@ -77,7 +76,7 @@ export function RegisterPage() {
                     </label>
 
                     <label className="field">
-                        <span>Confirm password</span>
+                        <span>{t('common.confirmPassword')}</span>
                         <input
                             autoComplete="new-password"
                             required
@@ -92,7 +91,7 @@ export function RegisterPage() {
                 </div>
 
                 <button className="button" disabled={submitting} type="submit">
-                    {submitting ? 'Creating account...' : 'Create account'}
+                    {submitting ? t('auth.creatingAccount') : t('common.createAccount')}
                 </button>
             </form>
         </AuthShell>

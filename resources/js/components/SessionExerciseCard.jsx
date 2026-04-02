@@ -1,5 +1,6 @@
 import { formatMuscleGroup } from '../lib/muscleGroups';
 import { formatWeightLabel } from '../lib/exerciseWeight';
+import { useTranslation } from '../contexts/LanguageContext';
 
 export function SessionExerciseCard({
     draft,
@@ -12,7 +13,8 @@ export function SessionExerciseCard({
     onToggleSelfWeight,
     saving,
 }) {
-    const categoryLabel = exercise.categoryLabel ?? formatMuscleGroup(exercise.category);
+    const { language, t } = useTranslation();
+    const categoryLabel = formatMuscleGroup(exercise.category, language);
     const nextSetNumber = exercise.completedSets + 1;
 
     return (
@@ -20,46 +22,43 @@ export function SessionExerciseCard({
             <div className="exercise-card__header">
                 <div className="exercise-card__heading">
                     <h3 className="exercise-card__title">{exercise.name}</h3>
-                    <p className="exercise-card__subtitle">
-                        {categoryLabel} · Ready for set {nextSetNumber}
-                    </p>
                 </div>
             </div>
 
-            <div className="exercise-card__stats" aria-label={`${exercise.name} summary`}>
+            <div className="exercise-card__stats" aria-label={t('workout.exerciseSummary', { name: exercise.name })}>
                 <div className="exercise-card__stat">
-                    <span className="exercise-card__stat-label">Muscle group</span>
+                    <span className="exercise-card__stat-label">{t('exercise.muscleGroup')}</span>
                     <strong className="exercise-card__stat-value">{categoryLabel}</strong>
                 </div>
 
                 <div className="exercise-card__stat">
-                    <span className="exercise-card__stat-label">Target reps</span>
+                    <span className="exercise-card__stat-label">{t('exercise.targetReps')}</span>
                     <strong className="exercise-card__stat-value">{exercise.targetReps}</strong>
                 </div>
 
                 <div className="exercise-card__stat">
-                    <span className="exercise-card__stat-label">Next set</span>
+                    <span className="exercise-card__stat-label">{t('exercise.nextSet')}</span>
                     <strong className="exercise-card__stat-value">{nextSetNumber}</strong>
                 </div>
 
                 <div className="exercise-card__stat">
-                    <span className="exercise-card__stat-label">Current load</span>
+                    <span className="exercise-card__stat-label">{t('exercise.currentLoad')}</span>
                     <strong className="exercise-card__stat-value">
-                        {formatWeightLabel(exercise.currentWeight, exercise.usesSelfWeight)}
+                        {formatWeightLabel(exercise.currentWeight, exercise.usesSelfWeight, language)}
                     </strong>
                 </div>
             </div>
 
             <div className="field exercise-card__mode">
-                <span>Weight type</span>
-                <div className="choice-row" role="group" aria-label={`${exercise.name} weight type`}>
+                <span>{t('workout.weightType')}</span>
+                <div className="choice-row" role="group" aria-label={t('workout.exerciseWeightType', { name: exercise.name })}>
                     <button
                         className={`choice-chip ${!exercise.usesSelfWeight ? 'choice-chip--active' : ''}`}
                         disabled={saving}
                         onClick={() => onToggleSelfWeight(exercise, false)}
                         type="button"
                     >
-                        External weight
+                        {t('workout.externalWeight')}
                     </button>
                     <button
                         className={`choice-chip ${exercise.usesSelfWeight ? 'choice-chip--active' : ''}`}
@@ -67,14 +66,14 @@ export function SessionExerciseCard({
                         onClick={() => onToggleSelfWeight(exercise, true)}
                         type="button"
                     >
-                        Self weight
+                        {t('workout.selfWeight')}
                     </button>
                 </div>
             </div>
 
             <div className="field-row exercise-card__inputs">
                 <label className="field field--strong">
-                    <span>Reps done</span>
+                    <span>{t('workout.repsDone')}</span>
                     <input
                         type="number"
                         min="1"
@@ -85,12 +84,12 @@ export function SessionExerciseCard({
 
                 {exercise.usesSelfWeight ? (
                     <div className="field field--strong field--readonly">
-                        <span>Load</span>
-                        <div className="field__static field__static--strong">Self weight</div>
+                        <span>{t('workout.load')}</span>
+                        <div className="field__static field__static--strong">{t('workout.selfWeight')}</div>
                     </div>
                 ) : (
                     <label className="field field--strong">
-                        <span>Weight</span>
+                        <span>{t('workout.weight')}</span>
                         <input
                             type="number"
                             min="0"
@@ -104,8 +103,8 @@ export function SessionExerciseCard({
 
             <div
                 className={`exercise-card__actions ${exercise.usesSelfWeight ? 'exercise-card__actions--single' : ''}`}
+                aria-label={t('workout.exerciseActions', { name: exercise.name })}
                 role="group"
-                aria-label={`${exercise.name} actions`}
             >
                 {!exercise.usesSelfWeight ? (
                     <button
@@ -114,7 +113,7 @@ export function SessionExerciseCard({
                         onClick={() => onDecreaseWeight(exercise)}
                         type="button"
                     >
-                        -2.5 kg
+                        {t('workout.adjustWeight', { unit: t('common.kg'), value: '-2.5' })}
                     </button>
                 ) : null}
 
@@ -124,7 +123,7 @@ export function SessionExerciseCard({
                     onClick={() => onCompleteSet(exercise)}
                     type="button"
                 >
-                    Complete set
+                    {t('workout.completeSet')}
                 </button>
 
                 {!exercise.usesSelfWeight ? (
@@ -134,7 +133,7 @@ export function SessionExerciseCard({
                         onClick={() => onIncreaseWeight(exercise)}
                         type="button"
                     >
-                        +2.5 kg
+                        {t('workout.adjustWeight', { unit: t('common.kg'), value: '+2.5' })}
                     </button>
                 ) : null}
             </div>
@@ -146,7 +145,7 @@ export function SessionExerciseCard({
                     onClick={() => onRemoveExercise(exercise)}
                     type="button"
                 >
-                    Delete exercise
+                    {t('workout.deleteExercise')}
                 </button>
             </div>
 
@@ -154,13 +153,15 @@ export function SessionExerciseCard({
                 <ol className="set-list">
                     {exercise.sets.map((set) => (
                         <li key={set.id}>
-                            Set {set.setNumber}: {set.reps} reps x {formatWeightLabel(set.weight, set.usesSelfWeight)}
+                            {t('exercise.setEntry', {
+                                number: set.setNumber,
+                                reps: set.reps,
+                                weight: formatWeightLabel(set.weight, set.usesSelfWeight, language),
+                            })}
                         </li>
                     ))}
                 </ol>
-            ) : (
-                <p className="empty-inline">No sets completed yet.</p>
-            )}
+            ) : null}
         </article>
     );
 }

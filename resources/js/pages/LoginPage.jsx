@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthShell } from '../components/AuthShell';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../contexts/LanguageContext';
 
 export function LoginPage() {
     const navigate = useNavigate();
     const { login } = useAuth();
+    const { t } = useTranslation();
     const [form, setForm] = useState({
         email: '',
         password: '',
@@ -31,17 +33,14 @@ export function LoginPage() {
     return (
         <AuthShell
             alternateHref="/register"
-            alternateLabel="Create one"
-            alternateText="Need an account?"
-            eyebrow="Strength Log"
-            subtitle="Pick up your current workout on any device, with every exercise and set stored under your account."
-            title="Sign in to your training dashboard"
+            alternateLabel={t('auth.createOne')}
+            title={t('auth.loginTitle')}
         >
             <form className="stack" onSubmit={handleSubmit}>
                 {error ? <p className="status-banner status-banner--error">{error}</p> : null}
 
                 <label className="field">
-                    <span>Email</span>
+                    <span>{t('common.email')}</span>
                     <input
                         autoComplete="email"
                         required
@@ -52,7 +51,7 @@ export function LoginPage() {
                 </label>
 
                 <label className="field">
-                    <span>Password</span>
+                    <span>{t('common.password')}</span>
                     <input
                         autoComplete="current-password"
                         required
@@ -63,7 +62,7 @@ export function LoginPage() {
                 </label>
 
                 <button className="button" disabled={submitting} type="submit">
-                    {submitting ? 'Signing in...' : 'Log in'}
+                    {submitting ? t('auth.signingIn') : t('common.logIn')}
                 </button>
             </form>
         </AuthShell>

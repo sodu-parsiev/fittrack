@@ -1,11 +1,13 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { api, setApiToken } from '../bootstrap';
+import { useTranslation } from './LanguageContext';
 import { getErrorMessage } from '../lib/errors';
 
 const TOKEN_STORAGE_KEY = 'fittrack_token';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+    const { t } = useTranslation();
     const [token, setToken] = useState(() => window.localStorage.getItem(TOKEN_STORAGE_KEY));
     const [user, setUser] = useState(null);
     const [booting, setBooting] = useState(true);
@@ -62,7 +64,7 @@ export function AuthProvider({ children }) {
             persistAuth(response.data);
             return response.data.user;
         } catch (error) {
-            throw new Error(getErrorMessage(error, 'Unable to create your account.'));
+            throw new Error(getErrorMessage(error, t('auth.unableToCreateAccount')));
         }
     }
 
@@ -72,7 +74,7 @@ export function AuthProvider({ children }) {
             persistAuth(response.data);
             return response.data.user;
         } catch (error) {
-            throw new Error(getErrorMessage(error, 'Unable to sign you in.'));
+            throw new Error(getErrorMessage(error, t('auth.unableToSignIn')));
         }
     }
 

@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../bootstrap';
 import { SessionExerciseCard } from '../components/SessionExerciseCard';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../contexts/LanguageContext';
 import { getErrorMessage } from '../lib/errors';
 import { formatWeightValue } from '../lib/exerciseWeight';
-import { MUSCLE_GROUP_OPTIONS } from '../lib/muscleGroups';
+import { getMuscleGroupOptions } from '../lib/muscleGroups';
 
 const TIMER_START_SECONDS = 60;
 const TIMER_OVERDUE_LIMIT_SECONDS = -180;
@@ -96,12 +97,12 @@ function playTimerSound() {
     }
 }
 
-function formatDateTime(value) {
+function formatDateTime(value, locale, fallbackLabel) {
     if (!value) {
-        return 'Just now';
+        return fallbackLabel;
     }
 
-    return new Intl.DateTimeFormat(undefined, {
+    return new Intl.DateTimeFormat(locale, {
         dateStyle: 'medium',
         timeStyle: 'short',
     }).format(new Date(value));
@@ -133,6 +134,7 @@ function resetDraftAfterSet(exercise, currentDraft = null) {
 
 export function WorkoutPage() {
     const navigate = useNavigate();
+    const { language, locale, t } = useTranslation();
     const { user } = useAuth();
     const [activeSession, setActiveSession] = useState(null);
     const [draftSets, setDraftSets] = useState({});
@@ -146,7 +148,6 @@ export function WorkoutPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
-    const [notice, setNotice] = useState('');
     const [timeLeft, setTimeLeft] = useState(TIMER_START_SECONDS);
     const [timerRunning, setTimerRunning] = useState(false);
 
@@ -206,7 +207,7 @@ export function WorkoutPage() {
 
             setActiveSession(response.data[0] ?? null);
         } catch (requestError) {
-            setError(getErrorMessage(requestError, 'Unable to load your current workout.'));
+            setError(getErrorMessage(requestError, t('workout.unableToLoadCurrent')));
         } finally {
             setLoading(false);
         }
@@ -215,14 +216,12 @@ export function WorkoutPage() {
     async function startWorkout() {
         setSaving(true);
         setError('');
-        setNotice('');
 
         try {
             const response = await api.post('/api/sessions');
             setActiveSession(response.data);
-            setNotice('Workout started. Every change is saved immediately.');
         } catch (requestError) {
-            setError(getErrorMessage(requestError, 'Unable to start a workout.'));
+            setError(getErrorMessage(requestError, t('workout.unableToStart')));
         } finally {
             setSaving(false);
         }
@@ -237,7 +236,6 @@ export function WorkoutPage() {
 
         setSaving(true);
         setError('');
-        setNotice('');
 
         try {
             const response = await api.post(`/api/sessions/${activeSession.id}/exercises`, {
@@ -256,9 +254,8 @@ export function WorkoutPage() {
                 currentWeight: '',
                 targetReps: '8',
             });
-            setNotice('Exercise added to your active session.');
         } catch (requestError) {
-            setError(getErrorMessage(requestError, 'Unable to add that exercise.'));
+            setError(getErrorMessage(requestError, t('workout.unableToAddExercise')));
         } finally {
             setSaving(false);
         }
@@ -281,7 +278,6 @@ export function WorkoutPage() {
 
         setSaving(true);
         setError('');
-        setNotice('');
 
         try {
             const response = await api.patch(`/api/exercises/${exercise.id}`, {
@@ -300,7 +296,7 @@ export function WorkoutPage() {
                 },
             }));
         } catch (requestError) {
-            setError(getErrorMessage(requestError, 'Unable to update the weight.'));
+            setError(getErrorMessage(requestError, t('workout.unableToUpdateWeight')));
         } finally {
             setSaving(false);
         }
@@ -315,7 +311,6 @@ export function WorkoutPage() {
 
         setSaving(true);
         setError('');
-        setNotice('');
 
         try {
             const response = await api.patch(`/api/exercises/${exercise.id}`, {
@@ -332,7 +327,7 @@ export function WorkoutPage() {
                 [exercise.id]: buildDraftSet(updatedExercise ?? exercise, current[exercise.id]),
             }));
         } catch (requestError) {
-            setError(getErrorMessage(requestError, 'Unable to update the weight type.'));
+            setError(getErrorMessage(requestError, t('workout.unableToUpdateWeightType')));
         } finally {
             setSaving(false);
         }
@@ -343,7 +338,6 @@ export function WorkoutPage() {
 
         setSaving(true);
         setError('');
-        setNotice('');
 
         try {
             const payload = {
@@ -366,29 +360,26 @@ export function WorkoutPage() {
                 [exercise.id]: resetDraftAfterSet(updatedExercise ?? exercise, current[exercise.id]),
             }));
             startTimer();
-            setNotice('Set saved.');
         } catch (requestError) {
-            setError(getErrorMessage(requestError, 'Unable to save that set.'));
+            setError(getErrorMessage(requestError, t('workout.unableToSaveSet')));
         } finally {
             setSaving(false);
         }
     }
 
     async function removeExercise(exercise) {
-        if (!window.confirm(`Delete ${exercise.name} from this session?`)) {
+        if (!window.confirm(t('workout.deleteExerciseConfirm', { name: exercise.name }))) {
             return;
         }
 
         setSaving(true);
         setError('');
-        setNotice('');
 
         try {
             const response = await api.delete(`/api/exercises/${exercise.id}`);
             setActiveSession(response.data);
-            setNotice('Exercise removed from the current workout.');
         } catch (requestError) {
-            setError(getErrorMessage(requestError, 'Unable to remove that exercise.'));
+            setError(getErrorMessage(requestError, t('workout.unableToRemoveExercise')));
         } finally {
             setSaving(false);
         }
@@ -401,7 +392,6 @@ export function WorkoutPage() {
 
         setSaving(true);
         setError('');
-        setNotice('');
 
         try {
             await api.patch(`/api/sessions/${activeSession.id}`, {
@@ -411,11 +401,9 @@ export function WorkoutPage() {
             setActiveSession(null);
             if (user) {
                 navigate('/app/history');
-            } else {
-                setNotice('Workout saved. Sign in if you want finished workouts to appear in history.');
             }
         } catch (requestError) {
-            setError(getErrorMessage(requestError, 'Unable to finish this workout.'));
+            setError(getErrorMessage(requestError, t('workout.unableToFinish')));
         } finally {
             setSaving(false);
         }
@@ -449,8 +437,7 @@ export function WorkoutPage() {
         return (
             <section className="panel">
                 <div className="panel__header">
-                    <h2 className="panel__title">Loading your active session</h2>
-                    <p className="panel__subtitle">Checking whether you already have a workout in progress.</p>
+                    <h2 className="panel__title">{t('common.loading')}</h2>
                 </div>
             </section>
         );
@@ -458,16 +445,12 @@ export function WorkoutPage() {
 
     const timerCanReset = timerRunning || timeLeft !== TIMER_START_SECONDS;
     const timerDisplayLabel = formatTimerValue(timeLeft);
+    const muscleGroupOptions = getMuscleGroupOptions(language);
 
     return (
         <div className={`stack stack--page ${activeSession ? 'stack--page-with-utility' : ''}`.trim()}>
-            <section className="page-header">
-                <div>
-                    <p className="page-header__eyebrow">Active workout</p>
-                    <h2 className="page-header__title">Track the session you are lifting right now</h2>
-                </div>
-
-                {activeSession ? (
+            {activeSession ? (
+                <section className="page-header page-header--actions-only">
                     <button
                         className="button button--secondary button--auto"
                         disabled={saving}
@@ -475,25 +458,25 @@ export function WorkoutPage() {
                         type="button"
                     >
                         <FlagIcon />
-                        <span>Finish workout</span>
+                        <span>{t('workout.finishWorkout')}</span>
                     </button>
-                ) : null}
-            </section>
+                </section>
+            ) : null}
 
             {activeSession ? (
-                <section className="floating-timer" aria-label="Rest timer">
+                <section className="floating-timer" aria-label={t('workout.restTimer')}>
                     <div className="floating-timer__display" aria-live="polite">
                         {timerDisplayLabel}
                     </div>
 
-                    <div className="floating-timer__actions" role="group" aria-label="Rest timer controls">
+                    <div className="floating-timer__actions" role="group" aria-label={t('workout.restTimerControls')}>
                         <button
                             className="button button--compact floating-timer__button"
                             disabled={timerRunning}
                             onClick={startTimer}
                             type="button"
                         >
-                            Start
+                            {t('workout.start')}
                         </button>
                         <button
                             className="button button--danger-soft button--compact floating-timer__button"
@@ -501,41 +484,29 @@ export function WorkoutPage() {
                             onClick={resetTimer}
                             type="button"
                         >
-                            Reset
+                            {t('workout.reset')}
                         </button>
                     </div>
                 </section>
             ) : null}
 
             {error ? <p className="status-banner status-banner--error">{error}</p> : null}
-            {notice ? <p className="status-banner status-banner--success">{notice}</p> : null}
 
             {!activeSession ? (
                 <section className="panel empty-state">
-                    <div className="panel__header">
-                        <h3 className="panel__title">No workout in progress</h3>
-                        <p className="panel__subtitle">
-                            Start a session when you walk into the gym. Each exercise and completed set will save to
-                            your account automatically.
-                        </p>
-                    </div>
-
                     <button className="button" disabled={saving} onClick={startWorkout} type="button">
                         <PlayIcon />
-                        <span>{saving ? 'Starting...' : 'Start workout'}</span>
+                        <span>{saving ? t('workout.starting') : t('workout.startWorkout')}</span>
                     </button>
                 </section>
             ) : (
                 <>
-                    <section className="panel">
-                        <div className="panel__header">
-                            <h3 className="panel__title">Current exercises</h3>
-                            <p className="panel__subtitle">
-                                Use the quick weight buttons or log completed sets directly into the active session.
-                            </p>
-                        </div>
+                    {activeSession.exercises.length > 0 ? (
+                        <section className="panel">
+                            <div className="panel__header">
+                                <h3 className="panel__title">{t('workout.currentExercises')}</h3>
+                            </div>
 
-                        {activeSession.exercises.length > 0 ? (
                             <div className="exercise-list">
                                 {activeSession.exercises.map((exercise) => (
                                     <SessionExerciseCard
@@ -552,43 +523,44 @@ export function WorkoutPage() {
                                     />
                                 ))}
                             </div>
-                        ) : (
-                            <p className="empty-inline">No exercises yet.</p>
-                        )}
-                    </section>
+                        </section>
+                    ) : null}
 
-                    <section className="metric-grid" aria-label="Workout summary">
+                    <section className="metric-grid" aria-label={t('workout.summary')}>
                         <article className="metric-pill">
-                            <span className="metric-pill__label">Started</span>
-                            <strong className="metric-pill__value">{formatDateTime(activeSession.startedAt)}</strong>
+                            <span className="metric-pill__label">{t('workout.started')}</span>
+                            <strong className="metric-pill__value">
+                                {formatDateTime(activeSession.startedAt, locale, t('common.justNow'))}
+                            </strong>
                         </article>
                         <article className="metric-pill">
-                            <span className="metric-pill__label">Exercises</span>
+                            <span className="metric-pill__label">{t('workout.exercises')}</span>
                             <strong className="metric-pill__value">{activeSession.exerciseCount}</strong>
                         </article>
                         <article className="metric-pill">
-                            <span className="metric-pill__label">Sets</span>
+                            <span className="metric-pill__label">{t('workout.sets')}</span>
                             <strong className="metric-pill__value">{activeSession.totalSets}</strong>
                         </article>
                         <article className="metric-pill">
-                            <span className="metric-pill__label">Volume</span>
-                            <strong className="metric-pill__value">{formatWeightValue(activeSession.totalVolume)} kg</strong>
+                            <span className="metric-pill__label">{t('workout.volume')}</span>
+                            <strong className="metric-pill__value">
+                                {formatWeightValue(activeSession.totalVolume, locale)} {t('common.kg')}
+                            </strong>
                         </article>
                     </section>
 
                     <section className="panel">
                         <div className="panel__header">
-                            <h3 className="panel__title">Add exercise</h3>
-                            <p className="panel__subtitle">Based on your original template, but now persisted per user.</p>
+                            <h3 className="panel__title">{t('workout.addExercise')}</h3>
                         </div>
 
                         <form className="stack" onSubmit={handleAddExercise}>
                             <label className="field">
-                                <span>Exercise name</span>
+                                <span>{t('workout.exerciseName')}</span>
                                 <input
                                     required
                                     type="text"
-                                    placeholder="Smith bench"
+                                    placeholder={t('workout.exercisePlaceholder')}
                                     value={exerciseForm.name}
                                     onChange={(event) => setExerciseForm((current) => ({
                                         ...current,
@@ -598,7 +570,7 @@ export function WorkoutPage() {
                             </label>
 
                             <label className="field">
-                                <span>Muscle group</span>
+                                <span>{t('workout.muscleGroup')}</span>
                                 <select
                                     required
                                     value={exerciseForm.category}
@@ -607,8 +579,8 @@ export function WorkoutPage() {
                                         category: event.target.value,
                                     }))}
                                 >
-                                    <option disabled value="">Choose a muscle group</option>
-                                    {MUSCLE_GROUP_OPTIONS.map((group) => (
+                                    <option disabled value="">{t('workout.chooseMuscleGroup')}</option>
+                                    {muscleGroupOptions.map((group) => (
                                         <option key={group.value} value={group.value}>
                                             {group.label}
                                         </option>
@@ -617,8 +589,8 @@ export function WorkoutPage() {
                             </label>
 
                             <div className="field">
-                                <span>Weight type</span>
-                                <div className="choice-row" role="group" aria-label="Exercise weight type">
+                                <span>{t('workout.weightType')}</span>
+                                <div className="choice-row" role="group" aria-label={t('workout.weightType')}>
                                     <button
                                         className={`choice-chip ${!exerciseForm.usesSelfWeight ? 'choice-chip--active' : ''}`}
                                         onClick={() => setExerciseForm((current) => ({
@@ -627,7 +599,7 @@ export function WorkoutPage() {
                                         }))}
                                         type="button"
                                     >
-                                        External weight
+                                        {t('workout.externalWeight')}
                                     </button>
                                     <button
                                         className={`choice-chip ${exerciseForm.usesSelfWeight ? 'choice-chip--active' : ''}`}
@@ -637,14 +609,14 @@ export function WorkoutPage() {
                                         }))}
                                         type="button"
                                     >
-                                        Self weight
+                                        {t('workout.selfWeight')}
                                     </button>
                                 </div>
                             </div>
 
                             <div className="field-row workout-form__pair">
                                 <label className="field">
-                                    <span>Weight (kg)</span>
+                                    <span>{t('workout.weightKg', { unit: t('common.kg') })}</span>
                                     <input
                                         disabled={exerciseForm.usesSelfWeight}
                                         min="0"
@@ -656,13 +628,10 @@ export function WorkoutPage() {
                                             currentWeight: event.target.value,
                                         }))}
                                     />
-                                    {exerciseForm.usesSelfWeight ? (
-                                        <small className="field__hint">Bodyweight exercise. Logged sets will show Self weight.</small>
-                                    ) : null}
                                 </label>
 
                                 <label className="field">
-                                    <span>Target reps</span>
+                                    <span>{t('workout.targetReps')}</span>
                                     <input
                                         min="1"
                                         type="number"
@@ -676,7 +645,7 @@ export function WorkoutPage() {
                             </div>
 
                             <button className="button" disabled={saving} type="submit">
-                                {saving ? 'Saving...' : 'Add exercise'}
+                                {saving ? t('workout.saving') : t('workout.addExerciseButton')}
                             </button>
                         </form>
                     </section>
@@ -685,56 +654,56 @@ export function WorkoutPage() {
 
             {activeSession ? (
                 <>
-                    <div className="scroll-dock" aria-label="Scroll controls">
+                    <div className="scroll-dock" aria-label={t('workout.scrollControls')}>
                         <button className="scroll-dock__button" onClick={scrollToTop} type="button">
-                            Top
+                            {t('workout.top')}
                         </button>
                         <button className="scroll-dock__button" onClick={scrollToBottom} type="button">
-                            Bottom
+                            {t('workout.bottom')}
                         </button>
                     </div>
 
-                    <section className="workout-utility-bar" aria-label="Workout utilities">
+                    <section className="workout-utility-bar" aria-label={t('workout.workoutUtilities')}>
                         <div className="workout-utility-bar__row">
                             <div className="workout-utility-bar__display" aria-live="polite">
                                 {timerDisplayLabel}
                             </div>
 
-                            <div className="workout-utility-bar__controls" role="group" aria-label="Workout utilities">
+                            <div className="workout-utility-bar__controls" role="group" aria-label={t('workout.workoutUtilities')}>
                                 <button
-                                    aria-label="Start timer"
+                                    aria-label={t('workout.startTimer')}
                                     className="button button--compact button--icon-only workout-utility-bar__button"
                                     disabled={timerRunning}
                                     onClick={startTimer}
-                                    title="Start timer"
+                                    title={t('workout.startTimer')}
                                     type="button"
                                 >
                                     <PlayIcon />
                                 </button>
                                 <button
-                                    aria-label="Reset timer"
+                                    aria-label={t('workout.resetTimer')}
                                     className="button button--danger-soft button--compact button--icon-only workout-utility-bar__button"
                                     disabled={!timerCanReset}
                                     onClick={resetTimer}
-                                    title="Reset timer"
+                                    title={t('workout.resetTimer')}
                                     type="button"
                                 >
                                     <ResetIcon />
                                 </button>
                                 <button
-                                    aria-label="Scroll to top"
+                                    aria-label={t('workout.scrollToTop')}
                                     className="button button--ghost button--compact button--icon-only workout-utility-bar__button"
                                     onClick={scrollToTop}
-                                    title="Top"
+                                    title={t('workout.top')}
                                     type="button"
                                 >
                                     <ArrowUpIcon />
                                 </button>
                                 <button
-                                    aria-label="Scroll to bottom"
+                                    aria-label={t('workout.scrollToBottom')}
                                     className="button button--ghost button--compact button--icon-only workout-utility-bar__button"
                                     onClick={scrollToBottom}
-                                    title="Bottom"
+                                    title={t('workout.bottom')}
                                     type="button"
                                 >
                                     <ArrowDownIcon />

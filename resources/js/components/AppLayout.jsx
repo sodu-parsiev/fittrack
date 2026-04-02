@@ -1,18 +1,21 @@
 import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../contexts/LanguageContext';
 
 export function AppLayout({ children }) {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const { logout, user } = useAuth();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const navigationItems = user
         ? [
-            { label: 'Workout', to: '/app/workout' },
-            { label: 'History', to: '/app/history' },
+            { label: t('nav.workout'), to: '/app/workout' },
+            { label: t('nav.history'), to: '/app/history' },
         ]
         : [
-            { label: 'Workout', to: '/app/workout' },
+            { label: t('nav.workout'), to: '/app/workout' },
         ];
 
     async function handleLogout() {
@@ -33,40 +36,34 @@ export function AppLayout({ children }) {
                 <header className="layout-header">
                     <div>
                         <p className="layout-header__eyebrow">FitTrack</p>
-                        <h1 className="layout-header__title">Every set, already saved</h1>
-                        <p className="layout-header__meta">
-                            {user ? (
-                                <>
-                                    Signed in as <strong>{user.name}</strong>
-                                </>
-                            ) : (
-                                'Guest mode saves workouts in the database for this device. Sign in to unlock history.'
-                            )}
-                        </p>
                     </div>
 
-                    {user ? (
-                        <button
-                            className="button button--ghost"
-                            onClick={handleLogout}
-                            type="button"
-                            disabled={isLoggingOut}
-                        >
-                            {isLoggingOut ? 'Signing out...' : 'Log out'}
-                        </button>
-                    ) : (
-                        <div className="layout-header__actions">
-                            <Link className="button button--ghost" to="/login">
-                                Log in
-                            </Link>
-                            <Link className="button button--auto" to="/register">
-                                Create account
-                            </Link>
-                        </div>
-                    )}
+                    <div className="layout-header__controls">
+                        <LanguageSwitcher />
+
+                        {user ? (
+                            <button
+                                className="button button--ghost"
+                                onClick={handleLogout}
+                                type="button"
+                                disabled={isLoggingOut}
+                            >
+                                {isLoggingOut ? t('common.signingOut') : t('common.logOut')}
+                            </button>
+                        ) : (
+                            <div className="layout-header__actions">
+                                <Link className="button button--ghost" to="/login">
+                                    {t('common.logIn')}
+                                </Link>
+                                <Link className="button button--auto" to="/register">
+                                    {t('common.createAccount')}
+                                </Link>
+                            </div>
+                        )}
+                    </div>
                 </header>
 
-                <nav className="nav-strip" aria-label="Primary navigation">
+                <nav className="nav-strip" aria-label={t('nav.primaryNavigation')}>
                     {navigationItems.map((item) => (
                         <NavLink
                             key={item.to}

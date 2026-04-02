@@ -11,6 +11,78 @@ const TIMER_START_SECONDS = 60;
 const TIMER_OVERDUE_LIMIT_SECONDS = -180;
 const TIMER_SOUND = 'data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
 
+function IconBase({ children }) {
+    return (
+        <svg aria-hidden="true" className="button__icon" fill="none" viewBox="0 0 24 24">
+            {children}
+        </svg>
+    );
+}
+
+function PlayIcon() {
+    return (
+        <IconBase>
+            <path d="M8 6.5v11l9-5.5-9-5.5Z" fill="currentColor" />
+        </IconBase>
+    );
+}
+
+function ResetIcon() {
+    return (
+        <IconBase>
+            <path
+                d="M20 12a8 8 0 1 1-2.34-5.66M20 4v4h-4"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.8"
+            />
+        </IconBase>
+    );
+}
+
+function ArrowUpIcon() {
+    return (
+        <IconBase>
+            <path
+                d="m7 13 5-5 5 5M12 8v8"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.8"
+            />
+        </IconBase>
+    );
+}
+
+function ArrowDownIcon() {
+    return (
+        <IconBase>
+            <path
+                d="m7 11 5 5 5-5M12 8v8"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.8"
+            />
+        </IconBase>
+    );
+}
+
+function FlagIcon() {
+    return (
+        <IconBase>
+            <path
+                d="M6 4v16M6 5h9l-1.5 3L15 11H6"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.8"
+            />
+        </IconBase>
+    );
+}
+
 function roundWeight(value) {
     return Math.max(0, Math.round(value * 100) / 100);
 }
@@ -402,7 +474,8 @@ export function WorkoutPage() {
                         onClick={finishWorkout}
                         type="button"
                     >
-                        Finish workout
+                        <FlagIcon />
+                        <span>Finish workout</span>
                     </button>
                 ) : null}
             </section>
@@ -448,7 +521,8 @@ export function WorkoutPage() {
                     </div>
 
                     <button className="button" disabled={saving} onClick={startWorkout} type="button">
-                        {saving ? 'Starting...' : 'Start workout'}
+                        <PlayIcon />
+                        <span>{saving ? 'Starting...' : 'Start workout'}</span>
                     </button>
                 </section>
             ) : (
@@ -621,46 +695,49 @@ export function WorkoutPage() {
                     </div>
 
                     <section className="workout-utility-bar" aria-label="Workout utilities">
-                        <div className="workout-utility-bar__top">
+                        <div className="workout-utility-bar__row">
                             <div className="workout-utility-bar__display" aria-live="polite">
                                 {timerDisplayLabel}
                             </div>
 
-                            <div className="workout-utility-bar__scroll" role="group" aria-label="Scroll controls">
+                            <div className="workout-utility-bar__controls" role="group" aria-label="Workout utilities">
                                 <button
-                                    className="button button--ghost button--compact workout-utility-bar__scroll-button"
-                                    onClick={scrollToTop}
-                                    type="button"
-                                >
-                                    Top
-                                </button>
-                                <button
-                                    className="button button--ghost button--compact workout-utility-bar__scroll-button"
-                                    onClick={scrollToBottom}
-                                    type="button"
-                                >
-                                    Bottom
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="workout-utility-bar__bottom">
-                            <div className="workout-utility-bar__actions" role="group" aria-label="Rest timer controls">
-                                <button
-                                    className="button button--compact"
+                                    aria-label="Start timer"
+                                    className="button button--compact button--icon-only workout-utility-bar__button"
                                     disabled={timerRunning}
                                     onClick={startTimer}
+                                    title="Start timer"
                                     type="button"
                                 >
-                                    Start
+                                    <PlayIcon />
                                 </button>
                                 <button
-                                    className="button button--danger-soft button--compact"
+                                    aria-label="Reset timer"
+                                    className="button button--danger-soft button--compact button--icon-only workout-utility-bar__button"
                                     disabled={!timerCanReset}
                                     onClick={resetTimer}
+                                    title="Reset timer"
                                     type="button"
                                 >
-                                    Reset
+                                    <ResetIcon />
+                                </button>
+                                <button
+                                    aria-label="Scroll to top"
+                                    className="button button--ghost button--compact button--icon-only workout-utility-bar__button"
+                                    onClick={scrollToTop}
+                                    title="Top"
+                                    type="button"
+                                >
+                                    <ArrowUpIcon />
+                                </button>
+                                <button
+                                    aria-label="Scroll to bottom"
+                                    className="button button--ghost button--compact button--icon-only workout-utility-bar__button"
+                                    onClick={scrollToBottom}
+                                    title="Bottom"
+                                    type="button"
+                                >
+                                    <ArrowDownIcon />
                                 </button>
                             </div>
                         </div>

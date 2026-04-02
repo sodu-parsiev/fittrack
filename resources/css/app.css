@@ -331,7 +331,12 @@ button {
 }
 
 .field select option {
-    color: #0f172a;
+    color: var(--text);
+    background-color: #101828;
+}
+
+.field select option:disabled {
+    color: var(--muted);
 }
 
 .field--strong input {

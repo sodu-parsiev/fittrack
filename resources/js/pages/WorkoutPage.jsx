@@ -52,6 +52,14 @@ function formatDateTime(value) {
     }).format(new Date(value));
 }
 
+function formatTimerValue(value) {
+    const totalSeconds = Math.max(0, Number(value) || 0);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
 export function WorkoutPage() {
     const navigate = useNavigate();
     const [activeSession, setActiveSession] = useState(null);
@@ -300,8 +308,11 @@ export function WorkoutPage() {
     }
 
     function startTimer() {
+        const shouldResume = !timerFinished && timeLeft > 0 && timeLeft < restSeconds;
+
         setTimerFinished(false);
-        setTimeLeft(restSeconds);
+        // Resume from a paused countdown; otherwise start fresh from the configured duration.
+        setTimeLeft(shouldResume ? timeLeft : restSeconds);
         setTimerRunning(true);
     }
 
@@ -314,6 +325,12 @@ export function WorkoutPage() {
         setTimerRunning(false);
         setTimerFinished(false);
         setTimeLeft(restSeconds);
+    }
+
+    function handleRestSecondsChange(event) {
+        const nextValue = Number.parseInt(event.target.value || '0', 10);
+
+        setRestSeconds(Number.isNaN(nextValue) ? 60 : Math.max(1, nextValue));
     }
 
     function scrollToTop() {
@@ -341,6 +358,12 @@ export function WorkoutPage() {
         );
     }
 
+    const timerCanResume = !timerRunning && !timerFinished && timeLeft > 0 && timeLeft < restSeconds;
+    const timerCanReset = timerRunning || timerFinished || timeLeft !== restSeconds;
+    const timerStartLabel = timerCanResume ? 'Resume' : 'Start';
+    const timerStatusLabel = timerRunning ? 'Running' : timerFinished ? 'Completed' : timerCanResume ? 'Paused' : 'Ready';
+    const timerDisplayLabel = timerFinished ? 'Done' : formatTimerValue(timeLeft);
+
     return (
         <div className="stack stack--page">
             <section className="page-header">
@@ -351,7 +374,7 @@ export function WorkoutPage() {
 
                 {activeSession ? (
                     <button
-                        className="button button--secondary"
+                        className="button button--secondary button--auto"
                         disabled={saving}
                         onClick={finishWorkout}
                         type="button"
@@ -363,36 +386,48 @@ export function WorkoutPage() {
 
             {activeSession ? (
                 <section className="floating-timer" aria-label="Rest timer">
-                    <div className="floating-timer__meta">
-                        <span className="floating-timer__label">Rest timer</span>
-                        <div className="floating-timer__display">
-                            {timerFinished ? 'Done' : timeLeft}
+                    <div className="floating-timer__top">
+                        <div className="floating-timer__meta">
+                            <span className="floating-timer__label">Rest timer</span>
+                            <span className="floating-timer__status">{timerStatusLabel}</span>
+                        </div>
+
+                        <div className="floating-timer__display" aria-live="polite">
+                            {timerDisplayLabel}
                         </div>
                     </div>
 
-                    <div className="floating-timer__controls">
-                        <label className="field floating-timer__field">
-                            <span>Seconds</span>
-                            <input
-                                min="1"
-                                type="number"
-                                value={restSeconds}
-                                onChange={(event) => setRestSeconds(Number(event.target.value || 60))}
-                            />
-                        </label>
+                    <label className="field floating-timer__field">
+                        <span>Seconds</span>
+                        <input
+                            inputMode="numeric"
+                            min="1"
+                            type="number"
+                            value={restSeconds}
+                            onChange={handleRestSecondsChange}
+                        />
+                    </label>
 
-                        <button className="button floating-timer__button" onClick={startTimer} type="button">
-                            Start
+                    <div className="floating-timer__actions" role="group" aria-label="Rest timer controls">
+                        <button
+                            className="button button--compact floating-timer__button"
+                            disabled={timerRunning || restSeconds < 1}
+                            onClick={startTimer}
+                            type="button"
+                        >
+                            {timerStartLabel}
                         </button>
                         <button
-                            className="button button--secondary floating-timer__button"
+                            className="button button--secondary button--compact floating-timer__button"
+                            disabled={!timerRunning}
                             onClick={pauseTimer}
                             type="button"
                         >
                             Pause
                         </button>
                         <button
-                            className="button button--danger floating-timer__button"
+                            className="button button--danger-soft button--compact floating-timer__button"
+                            disabled={!timerCanReset}
                             onClick={resetTimer}
                             type="button"
                         >
@@ -421,7 +456,36 @@ export function WorkoutPage() {
                 </section>
             ) : (
                 <>
-                    <section className="metric-grid">
+                    <section className="panel">
+                        <div className="panel__header">
+                            <h3 className="panel__title">Current exercises</h3>
+                            <p className="panel__subtitle">
+                                Use the quick weight buttons or log completed sets directly into the active session.
+                            </p>
+                        </div>
+
+                        {activeSession.exercises.length > 0 ? (
+                            <div className="exercise-list">
+                                {activeSession.exercises.map((exercise) => (
+                                    <SessionExerciseCard
+                                        key={exercise.id}
+                                        draft={draftSets[exercise.id]}
+                                        exercise={exercise}
+                                        onChangeDraft={handleDraftChange}
+                                        onCompleteSet={completeSet}
+                                        onDecreaseWeight={(selectedExercise) => updateExerciseWeight(selectedExercise, -2.5)}
+                                        onIncreaseWeight={(selectedExercise) => updateExerciseWeight(selectedExercise, 2.5)}
+                                        onRemoveExercise={removeExercise}
+                                        saving={saving}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="empty-inline">No exercises yet.</p>
+                        )}
+                    </section>
+
+                    <section className="metric-grid" aria-label="Workout summary">
                         <article className="metric-pill">
                             <span className="metric-pill__label">Started</span>
                             <strong className="metric-pill__value">{formatDateTime(activeSession.startedAt)}</strong>
@@ -480,7 +544,7 @@ export function WorkoutPage() {
                                 </select>
                             </label>
 
-                            <div className="field-row">
+                            <div className="field-row workout-form__pair">
                                 <label className="field">
                                     <span>Weight (kg)</span>
                                     <input
@@ -513,35 +577,6 @@ export function WorkoutPage() {
                                 {saving ? 'Saving...' : 'Add exercise'}
                             </button>
                         </form>
-                    </section>
-
-                    <section className="panel">
-                        <div className="panel__header">
-                            <h3 className="panel__title">Exercises</h3>
-                            <p className="panel__subtitle">
-                                Use the quick weight buttons or log completed sets directly into the active session.
-                            </p>
-                        </div>
-
-                        {activeSession.exercises.length > 0 ? (
-                            <div className="exercise-list">
-                                {activeSession.exercises.map((exercise) => (
-                                    <SessionExerciseCard
-                                        key={exercise.id}
-                                        draft={draftSets[exercise.id]}
-                                        exercise={exercise}
-                                        onChangeDraft={handleDraftChange}
-                                        onCompleteSet={completeSet}
-                                        onDecreaseWeight={(selectedExercise) => updateExerciseWeight(selectedExercise, -2.5)}
-                                        onIncreaseWeight={(selectedExercise) => updateExerciseWeight(selectedExercise, 2.5)}
-                                        onRemoveExercise={removeExercise}
-                                        saving={saving}
-                                    />
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="empty-inline">No exercises yet.</p>
-                        )}
                     </section>
                 </>
             )}

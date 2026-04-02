@@ -20,37 +20,43 @@ export function SessionExerciseCard({
     onRemoveExercise,
     saving,
 }) {
+    const categoryLabel = exercise.categoryLabel ?? formatMuscleGroup(exercise.category);
+    const nextSetNumber = exercise.completedSets + 1;
+
     return (
         <article className="exercise-card">
             <div className="exercise-card__header">
-                <div>
+                <div className="exercise-card__heading">
                     <h3 className="exercise-card__title">{exercise.name}</h3>
                     <p className="exercise-card__subtitle">
-                        {exercise.categoryLabel ?? formatMuscleGroup(exercise.category)} · Current weight{' '}
-                        <strong>{formatWeight(exercise.currentWeight)} kg</strong>
+                        {categoryLabel} · Ready for set {nextSetNumber}
                     </p>
                 </div>
+            </div>
 
-                <div className="badge-row">
-                    <span className="badge">{exercise.categoryLabel ?? formatMuscleGroup(exercise.category)}</span>
-                    <span className="badge">Target {exercise.targetReps} reps</span>
-                    <span className="badge">Sets {exercise.completedSets}</span>
+            <div className="exercise-card__stats" aria-label={`${exercise.name} summary`}>
+                <div className="exercise-card__stat">
+                    <span className="exercise-card__stat-label">Muscle group</span>
+                    <strong className="exercise-card__stat-value">{categoryLabel}</strong>
+                </div>
+
+                <div className="exercise-card__stat">
+                    <span className="exercise-card__stat-label">Target reps</span>
+                    <strong className="exercise-card__stat-value">{exercise.targetReps}</strong>
+                </div>
+
+                <div className="exercise-card__stat">
+                    <span className="exercise-card__stat-label">Next set</span>
+                    <strong className="exercise-card__stat-value">{nextSetNumber}</strong>
+                </div>
+
+                <div className="exercise-card__stat">
+                    <span className="exercise-card__stat-label">Current weight</span>
+                    <strong className="exercise-card__stat-value">{formatWeight(exercise.currentWeight)} kg</strong>
                 </div>
             </div>
 
-            <div className="exercise-card__metrics">
-                <div className="exercise-card__metric">
-                    <span className="exercise-card__metric-label">Target reps</span>
-                    <strong className="exercise-card__metric-value">{exercise.targetReps}</strong>
-                </div>
-
-                <div className="exercise-card__metric">
-                    <span className="exercise-card__metric-label">Current weight</span>
-                    <strong className="exercise-card__metric-value">{formatWeight(exercise.currentWeight)} kg</strong>
-                </div>
-            </div>
-
-            <div className="field-row">
+            <div className="field-row exercise-card__inputs">
                 <label className="field field--strong">
                     <span>Reps done</span>
                     <input
@@ -73,42 +79,45 @@ export function SessionExerciseCard({
                 </label>
             </div>
 
-            <button
-                className="button"
-                disabled={saving}
-                onClick={() => onCompleteSet(exercise)}
-                type="button"
-            >
-                Complete set
-            </button>
-
-            <div className="button-row">
+            <div className="exercise-card__actions" role="group" aria-label={`${exercise.name} actions`}>
                 <button
-                    className="button button--secondary"
-                    disabled={saving}
-                    onClick={() => onIncreaseWeight(exercise)}
-                    type="button"
-                >
-                    +2.5 kg
-                </button>
-                <button
-                    className="button button--secondary"
+                    className="button button--secondary button--compact"
                     disabled={saving}
                     onClick={() => onDecreaseWeight(exercise)}
                     type="button"
                 >
                     -2.5 kg
                 </button>
+
+                <button
+                    className="button button--compact exercise-card__complete"
+                    disabled={saving}
+                    onClick={() => onCompleteSet(exercise)}
+                    type="button"
+                >
+                    Complete set
+                </button>
+
+                <button
+                    className="button button--secondary button--compact"
+                    disabled={saving}
+                    onClick={() => onIncreaseWeight(exercise)}
+                    type="button"
+                >
+                    +2.5 kg
+                </button>
             </div>
 
-            <button
-                className="button button--danger"
-                disabled={saving}
-                onClick={() => onRemoveExercise(exercise)}
-                type="button"
-            >
-                Delete exercise
-            </button>
+            <div className="exercise-card__secondary">
+                <button
+                    className="button button--danger-soft button--compact button--auto"
+                    disabled={saving}
+                    onClick={() => onRemoveExercise(exercise)}
+                    type="button"
+                >
+                    Delete exercise
+                </button>
+            </div>
 
             {exercise.sets.length > 0 ? (
                 <ol className="set-list">

@@ -1,0 +1,69 @@
+*.log
+*.pid
+*.seed
+*.out
+*.err
+.DS_Store
+Thumbs.db
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+.env.backup
+/auth.json
+
+# PHP / Laravel
+/.phpunit.cache
+.phpunit.result.cache
+.phpactor.json
+_ide_helper.php
+/vendor/
+/bootstrap/cache/*.php
+/bootstrap/cache/packages.php
+/bootstrap/cache/services.php
+!/bootstrap/cache/.gitignore
+/public/build/
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/storage/logs/*.log
+/storage/framework/cache/data/**
+/storage/framework/sessions/**
+/storage/framework/testing/**
+/storage/framework/views/**
+!/storage/app/.gitignore
+!/storage/app/public/.gitignore
+!/storage/app/private/.gitignore
+!/storage/framework/.gitignore
+!/storage/framework/cache/.gitignore
+!/storage/framework/cache/data/.gitignore
+!/storage/framework/sessions/.gitignore
+!/storage/framework/testing/.gitignore
+!/storage/framework/views/.gitignore
+!/storage/logs/.gitignore
+
+# JavaScript
+/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Databases and coverage
+/database/*.sqlite
+/database/*.sqlite-journal
+/coverage/
+!/database/.gitignore
+
+# Editors and tooling
+/.fleet/
+/.idea/
+/.nova/
+/.vscode/
+/.zed/
+
+# Local containers / VMs
+Homestead.json
+Homestead.yaml

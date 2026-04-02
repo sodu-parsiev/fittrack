@@ -8,8 +8,8 @@ use App\Enums\WorkoutSessionStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Workout\UpdateWorkoutSessionRequest;
 use App\Http\Resources\WorkoutSessionResource;
-use App\Models\User;
 use App\Models\WorkoutSession;
+use App\Services\WorkoutActorResolver;
 use App\Services\WorkoutSessionService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -17,9 +17,10 @@ use Illuminate\Validation\Rule;
 
 class WorkoutSessionController extends Controller
 {
-    public function __construct(private readonly WorkoutSessionService $workoutSessions)
-    {
-    }
+    public function __construct(
+        private readonly WorkoutSessionService $workoutSessions,
+        private readonly WorkoutActorResolver $actors,
+    ) {}
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -30,35 +31,29 @@ class WorkoutSessionController extends Controller
             ])],
         ]);
 
-        /** @var User $user */
-        $user = $request->user();
         $status = isset($validated['status']) ? WorkoutSessionStatus::from((string) $validated['status']) : null;
+        $actor = $this->actors->fromRequest($request);
 
         return WorkoutSessionResource::collection(
-            $this->workoutSessions->listSessions($user, $status),
+            $this->workoutSessions->listSessionsForActor($actor, $status),
         );
     }
 
     public function store(Request $request): WorkoutSessionResource
     {
-        /** @var User $user */
-        $user = $request->user();
+        $actor = $this->actors->fromRequest($request);
 
         return new WorkoutSessionResource(
-            $this->workoutSessions->getOrCreateActiveSessionFor($user),
+            $this->workoutSessions->getOrCreateActiveSessionForActor($actor),
         );
     }
 
     public function update(UpdateWorkoutSessionRequest $request, WorkoutSession $session): WorkoutSessionResource
     {
-        /** @var User $user */
-        $user = $request->user();
-
-        $ownedSession = WorkoutSession::query()
-            ->whereBelongsTo($user)
-            ->whereKey($session->getKey())
-            ->firstOrFail();
-
+        $ownedSession = $this->workoutSessions->ownedSession(
+            $this->actors->fromRequest($request),
+            $session,
+        );
         $validated = $request->validated();
 
         if (($validated['status'] ?? null) === WorkoutSessionStatus::Completed->value) {

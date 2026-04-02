@@ -8,6 +8,7 @@ use App\Models\SessionExercise;
 use App\Models\User;
 use App\Models\WorkoutSession;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class WorkoutSessionApiTest extends TestCase
@@ -128,6 +129,63 @@ class WorkoutSessionApiTest extends TestCase
             ->assertJsonPath('0.exercises.0.sets.0.usesSelfWeight', true);
     }
 
+    public function test_guest_user_can_run_a_workout_flow_without_history(): void
+    {
+        $headers = $this->guestWorkoutHeaders();
+
+        $sessionResponse = $this->withHeaders($headers)->postJson('/api/sessions');
+
+        $sessionResponse
+            ->assertSuccessful()
+            ->assertJsonPath('status', 'active');
+
+        $sessionId = $sessionResponse->json('id');
+
+        $exerciseResponse = $this->withHeaders($headers)
+            ->postJson("/api/sessions/{$sessionId}/exercises", [
+                'name' => 'Push Up',
+                'category' => 'chest',
+                'uses_self_weight' => true,
+                'target_reps' => 15,
+            ]);
+
+        $exerciseResponse
+            ->assertOk()
+            ->assertJsonPath('exerciseCount', 1)
+            ->assertJsonPath('exercises.0.usesSelfWeight', true)
+            ->assertJsonPath('exercises.0.currentWeight', 0);
+
+        $exerciseId = $exerciseResponse->json('exercises.0.id');
+
+        $this->withHeaders($headers)
+            ->postJson("/api/exercises/{$exerciseId}/sets", [
+                'reps' => 15,
+                'uses_self_weight' => true,
+            ])
+            ->assertOk()
+            ->assertJsonPath('totalSets', 1)
+            ->assertJsonPath('exercises.0.sets.0.usesSelfWeight', true);
+
+        $this->withHeaders($headers)
+            ->patchJson("/api/sessions/{$sessionId}", [
+                'status' => 'completed',
+            ])
+            ->assertOk()
+            ->assertJsonPath('status', 'completed');
+
+        $this->withHeaders($headers)
+            ->getJson('/api/sessions?status=completed')
+            ->assertOk()
+            ->assertExactJson([]);
+
+        $this->assertDatabaseHas('workout_sessions', [
+            'id' => $sessionId,
+            'user_id' => null,
+            'guest_token' => $headers['X-Workout-Guest'],
+            'status' => 'completed',
+        ]);
+    }
+
     public function test_completed_session_cannot_be_modified(): void
     {
         $user = User::factory()->create();
@@ -197,5 +255,12 @@ class WorkoutSessionApiTest extends TestCase
             ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['category']);
+    }
+
+    private function guestWorkoutHeaders(): array
+    {
+        return [
+            'X-Workout-Guest' => (string) Str::uuid(),
+        ];
     }
 }

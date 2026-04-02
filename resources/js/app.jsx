@@ -52,6 +52,20 @@ function ProtectedRoute({ children }) {
     return <AppLayout>{children}</AppLayout>;
 }
 
+function WorkoutRoute() {
+    const { booting } = useAuth();
+
+    if (booting) {
+        return <LoadingScreen />;
+    }
+
+    return (
+        <AppLayout>
+            <WorkoutPage />
+        </AppLayout>
+    );
+}
+
 function AppRouter() {
     return (
         <Routes>
@@ -73,11 +87,7 @@ function AppRouter() {
             />
             <Route
                 path="/app/workout"
-                element={(
-                    <ProtectedRoute>
-                        <WorkoutPage />
-                    </ProtectedRoute>
-                )}
+                element={<WorkoutRoute />}
             />
             <Route
                 path="/app/history"

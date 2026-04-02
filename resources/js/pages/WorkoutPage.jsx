@@ -2,22 +2,14 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../bootstrap';
 import { SessionExerciseCard } from '../components/SessionExerciseCard';
+import { useAuth } from '../contexts/AuthContext';
 import { getErrorMessage } from '../lib/errors';
 import { formatWeightValue } from '../lib/exerciseWeight';
 import { MUSCLE_GROUP_OPTIONS } from '../lib/muscleGroups';
 
-const REST_SECONDS_STORAGE_KEY = 'fittrack_rest_seconds';
+const TIMER_START_SECONDS = 60;
+const TIMER_OVERDUE_LIMIT_SECONDS = -180;
 const TIMER_SOUND = 'data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
-
-function readInitialRestSeconds() {
-    const storedValue = Number.parseInt(window.localStorage.getItem(REST_SECONDS_STORAGE_KEY) ?? '60', 10);
-
-    if (Number.isNaN(storedValue) || storedValue < 1) {
-        return 60;
-    }
-
-    return storedValue;
-}
 
 function roundWeight(value) {
     return Math.max(0, Math.round(value * 100) / 100);
@@ -44,11 +36,13 @@ function formatDateTime(value) {
 }
 
 function formatTimerValue(value) {
-    const totalSeconds = Math.max(0, Number(value) || 0);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
+    const totalSeconds = Math.trunc(Number(value) || 0);
+    const absoluteSeconds = Math.abs(totalSeconds);
+    const minutes = Math.floor(absoluteSeconds / 60);
+    const seconds = absoluteSeconds % 60;
+    const prefix = totalSeconds < 0 ? '-' : '';
 
-    return `${minutes}:${String(seconds).padStart(2, '0')}`;
+    return `${prefix}${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
 function buildDraftSet(exercise, currentDraft = null) {
@@ -67,6 +61,7 @@ function resetDraftAfterSet(exercise, currentDraft = null) {
 
 export function WorkoutPage() {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [activeSession, setActiveSession] = useState(null);
     const [draftSets, setDraftSets] = useState({});
     const [exerciseForm, setExerciseForm] = useState({
@@ -80,10 +75,8 @@ export function WorkoutPage() {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [notice, setNotice] = useState('');
-    const [restSeconds, setRestSeconds] = useState(readInitialRestSeconds);
-    const [timeLeft, setTimeLeft] = useState(readInitialRestSeconds);
+    const [timeLeft, setTimeLeft] = useState(TIMER_START_SECONDS);
     const [timerRunning, setTimerRunning] = useState(false);
-    const [timerFinished, setTimerFinished] = useState(false);
 
     useEffect(() => {
         loadActiveSession();
@@ -107,26 +100,20 @@ export function WorkoutPage() {
     }, [activeSession]);
 
     useEffect(() => {
-        window.localStorage.setItem(REST_SECONDS_STORAGE_KEY, String(restSeconds));
-
-        if (!timerRunning && !timerFinished) {
-            setTimeLeft(restSeconds);
-        }
-    }, [restSeconds]);
-
-    useEffect(() => {
         if (!timerRunning) {
             return undefined;
         }
 
         const interval = window.setInterval(() => {
             setTimeLeft((current) => {
-                if (current <= 1) {
+                if (current === 1) {
+                    playTimerSound();
+                }
+
+                if (current <= TIMER_OVERDUE_LIMIT_SECONDS) {
                     window.clearInterval(interval);
                     setTimerRunning(false);
-                    setTimerFinished(true);
-                    playTimerSound();
-                    return 0;
+                    return TIMER_OVERDUE_LIMIT_SECONDS;
                 }
 
                 return current - 1;
@@ -350,7 +337,11 @@ export function WorkoutPage() {
             });
 
             setActiveSession(null);
-            navigate('/app/history');
+            if (user) {
+                navigate('/app/history');
+            } else {
+                setNotice('Workout saved. Sign in if you want finished workouts to appear in history.');
+            }
         } catch (requestError) {
             setError(getErrorMessage(requestError, 'Unable to finish this workout.'));
         } finally {
@@ -359,29 +350,13 @@ export function WorkoutPage() {
     }
 
     function startTimer() {
-        const shouldResume = !timerFinished && timeLeft > 0 && timeLeft < restSeconds;
-
-        setTimerFinished(false);
-        // Resume from a paused countdown; otherwise start fresh from the configured duration.
-        setTimeLeft(shouldResume ? timeLeft : restSeconds);
+        setTimeLeft(TIMER_START_SECONDS);
         setTimerRunning(true);
-    }
-
-    function pauseTimer() {
-        setTimerRunning(false);
-        setTimerFinished(false);
     }
 
     function resetTimer() {
         setTimerRunning(false);
-        setTimerFinished(false);
-        setTimeLeft(restSeconds);
-    }
-
-    function handleRestSecondsChange(event) {
-        const nextValue = Number.parseInt(event.target.value || '0', 10);
-
-        setRestSeconds(Number.isNaN(nextValue) ? 60 : Math.max(1, nextValue));
+        setTimeLeft(TIMER_START_SECONDS);
     }
 
     function scrollToTop() {
@@ -409,11 +384,8 @@ export function WorkoutPage() {
         );
     }
 
-    const timerCanResume = !timerRunning && !timerFinished && timeLeft > 0 && timeLeft < restSeconds;
-    const timerCanReset = timerRunning || timerFinished || timeLeft !== restSeconds;
-    const timerStartLabel = timerCanResume ? 'Resume' : 'Start';
-    const timerStatusLabel = timerRunning ? 'Running' : timerFinished ? 'Completed' : timerCanResume ? 'Paused' : 'Ready';
-    const timerDisplayLabel = timerFinished ? 'Done' : formatTimerValue(timeLeft);
+    const timerCanReset = timerRunning || timeLeft !== TIMER_START_SECONDS;
+    const timerDisplayLabel = formatTimerValue(timeLeft);
 
     return (
         <div className={`stack stack--page ${activeSession ? 'stack--page-with-utility' : ''}`.trim()}>
@@ -437,44 +409,18 @@ export function WorkoutPage() {
 
             {activeSession ? (
                 <section className="floating-timer" aria-label="Rest timer">
-                    <div className="floating-timer__top">
-                        <div className="floating-timer__meta">
-                            <span className="floating-timer__label">Rest timer</span>
-                            <span className="floating-timer__status">{timerStatusLabel}</span>
-                        </div>
-
-                        <div className="floating-timer__display" aria-live="polite">
-                            {timerDisplayLabel}
-                        </div>
+                    <div className="floating-timer__display" aria-live="polite">
+                        {timerDisplayLabel}
                     </div>
-
-                    <label className="field floating-timer__field">
-                        <span>Seconds</span>
-                        <input
-                            inputMode="numeric"
-                            min="1"
-                            type="number"
-                            value={restSeconds}
-                            onChange={handleRestSecondsChange}
-                        />
-                    </label>
 
                     <div className="floating-timer__actions" role="group" aria-label="Rest timer controls">
                         <button
                             className="button button--compact floating-timer__button"
-                            disabled={timerRunning || restSeconds < 1}
+                            disabled={timerRunning}
                             onClick={startTimer}
                             type="button"
                         >
-                            {timerStartLabel}
-                        </button>
-                        <button
-                            className="button button--secondary button--compact floating-timer__button"
-                            disabled={!timerRunning}
-                            onClick={pauseTimer}
-                            type="button"
-                        >
-                            Pause
+                            Start
                         </button>
                         <button
                             className="button button--danger-soft button--compact floating-timer__button"
@@ -676,11 +622,6 @@ export function WorkoutPage() {
 
                     <section className="workout-utility-bar" aria-label="Workout utilities">
                         <div className="workout-utility-bar__top">
-                            <div className="workout-utility-bar__meta">
-                                <span className="floating-timer__label">Rest timer</span>
-                                <span className="floating-timer__status">{timerStatusLabel}</span>
-                            </div>
-
                             <div className="workout-utility-bar__display" aria-live="polite">
                                 {timerDisplayLabel}
                             </div>
@@ -704,33 +645,14 @@ export function WorkoutPage() {
                         </div>
 
                         <div className="workout-utility-bar__bottom">
-                            <label className="field workout-utility-bar__field">
-                                <span>Seconds</span>
-                                <input
-                                    inputMode="numeric"
-                                    min="1"
-                                    type="number"
-                                    value={restSeconds}
-                                    onChange={handleRestSecondsChange}
-                                />
-                            </label>
-
                             <div className="workout-utility-bar__actions" role="group" aria-label="Rest timer controls">
                                 <button
                                     className="button button--compact"
-                                    disabled={timerRunning || restSeconds < 1}
+                                    disabled={timerRunning}
                                     onClick={startTimer}
                                     type="button"
                                 >
-                                    {timerStartLabel}
-                                </button>
-                                <button
-                                    className="button button--secondary button--compact"
-                                    disabled={!timerRunning}
-                                    onClick={pauseTimer}
-                                    type="button"
-                                >
-                                    Pause
+                                    Start
                                 </button>
                                 <button
                                     className="button button--danger-soft button--compact"

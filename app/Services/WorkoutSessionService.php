@@ -8,6 +8,7 @@ use App\Enums\WorkoutSessionStatus;
 use App\Models\SessionExercise;
 use App\Models\User;
 use App\Models\WorkoutSession;
+use App\Support\WorkoutActor;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -16,10 +17,14 @@ use Illuminate\Validation\ValidationException;
 
 class WorkoutSessionService
 {
-    public function listSessions(User $user, ?WorkoutSessionStatus $status = null): Collection
+    public function listSessionsForActor(WorkoutActor $actor, ?WorkoutSessionStatus $status = null): Collection
     {
-        return WorkoutSession::query()
-            ->whereBelongsTo($user)
+        if ($actor->isGuest() && $status === WorkoutSessionStatus::Completed) {
+            return new Collection();
+        }
+
+        return $this->sessionsForActor(WorkoutSession::query(), $actor)
+            ->when($actor->isGuest() && $status === null, fn (Builder $query) => $query->where('status', WorkoutSessionStatus::Active->value))
             ->when($status !== null, fn (Builder $query) => $query->where('status', $status->value))
             ->with([
                 'sessionExercises' => fn ($query) => $query->orderBy('sort_order'),
@@ -29,11 +34,10 @@ class WorkoutSessionService
             ->get();
     }
 
-    public function getOrCreateActiveSessionFor(User $user): WorkoutSession
+    public function getOrCreateActiveSessionForActor(WorkoutActor $actor): WorkoutSession
     {
-        return DB::transaction(function () use ($user): WorkoutSession {
-            $session = WorkoutSession::query()
-                ->whereBelongsTo($user)
+        return DB::transaction(function () use ($actor): WorkoutSession {
+            $session = $this->sessionsForActor(WorkoutSession::query(), $actor)
                 ->where('status', WorkoutSessionStatus::Active->value)
                 ->lockForUpdate()
                 ->first();
@@ -42,13 +46,31 @@ class WorkoutSessionService
                 return $this->loadSession($session);
             }
 
-            $session = $user->workoutSessions()->create([
+            $session = WorkoutSession::query()->create([
+                'user_id' => $actor->user?->getKey(),
+                'guest_token' => $actor->guestToken,
                 'status' => WorkoutSessionStatus::Active,
                 'started_at' => now(),
             ]);
 
             return $this->loadSession($session);
         });
+    }
+
+    public function ownedSession(WorkoutActor $actor, WorkoutSession $session): WorkoutSession
+    {
+        return $this->sessionsForActor(WorkoutSession::query(), $actor)
+            ->whereKey($session->getKey())
+            ->firstOrFail();
+    }
+
+    public function ownedExercise(WorkoutActor $actor, SessionExercise $exercise): SessionExercise
+    {
+        return SessionExercise::query()
+            ->with('workoutSession')
+            ->whereKey($exercise->getKey())
+            ->whereHas('workoutSession', fn (Builder $query) => $this->sessionsForActor($query, $actor))
+            ->firstOrFail();
     }
 
     public function loadSession(WorkoutSession $session): WorkoutSession
@@ -188,5 +210,22 @@ class WorkoutSessionService
     private function toBoolean(mixed $value): bool
     {
         return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    /**
+     * @template TModel of \Illuminate\Database\Eloquent\Model
+     *
+     * @param  Builder<TModel>  $query
+     * @return Builder<TModel>
+     */
+    private function sessionsForActor(Builder $query, WorkoutActor $actor): Builder
+    {
+        if ($actor->isAuthenticated()) {
+            return $query->whereBelongsTo($actor->user);
+        }
+
+        return $query
+            ->whereNull('user_id')
+            ->where('guest_token', $actor->guestToken);
     }
 }

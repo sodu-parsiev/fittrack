@@ -10,22 +10,23 @@ use App\Http\Requests\Workout\UpdateSessionExerciseRequest;
 use App\Http\Resources\WorkoutSessionResource;
 use App\Models\SessionExercise;
 use App\Models\WorkoutSession;
+use App\Services\WorkoutActorResolver;
 use App\Services\WorkoutSessionService;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 class SessionExerciseController extends Controller
 {
-    public function __construct(private readonly WorkoutSessionService $workoutSessions)
-    {
-    }
+    public function __construct(
+        private readonly WorkoutSessionService $workoutSessions,
+        private readonly WorkoutActorResolver $actors,
+    ) {}
 
     public function store(StoreSessionExerciseRequest $request, WorkoutSession $session): WorkoutSessionResource
     {
-        $ownedSession = WorkoutSession::query()
-            ->whereBelongsTo($request->user())
-            ->whereKey($session->getKey())
-            ->firstOrFail();
+        $ownedSession = $this->workoutSessions->ownedSession(
+            $this->actors->fromRequest($request),
+            $session,
+        );
 
         return new WorkoutSessionResource(
             $this->workoutSessions->createExercise($ownedSession, $request->validated()),
@@ -36,7 +37,10 @@ class SessionExerciseController extends Controller
     {
         return new WorkoutSessionResource(
             $this->workoutSessions->updateExercise(
-                $this->ownedExercise($request, $exercise),
+                $this->workoutSessions->ownedExercise(
+                    $this->actors->fromRequest($request),
+                    $exercise,
+                ),
                 $request->validated(),
             ),
         );
@@ -46,17 +50,11 @@ class SessionExerciseController extends Controller
     {
         return new WorkoutSessionResource(
             $this->workoutSessions->deleteExercise(
-                $this->ownedExercise($request, $exercise),
+                $this->workoutSessions->ownedExercise(
+                    $this->actors->fromRequest($request),
+                    $exercise,
+                ),
             ),
         );
-    }
-
-    private function ownedExercise(Request $request, SessionExercise $exercise): SessionExercise
-    {
-        return SessionExercise::query()
-            ->with('workoutSession')
-            ->whereKey($exercise->getKey())
-            ->whereHas('workoutSession', fn (Builder $query) => $query->whereBelongsTo($request->user()))
-            ->firstOrFail();
     }
 }

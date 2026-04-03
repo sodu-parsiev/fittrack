@@ -464,7 +464,7 @@ button {
     min-height: 44px;
     padding: 10px 14px;
     border: 1px solid rgba(148, 163, 184, 0.18);
-    border-radius: 999px;
+    border-radius: var(--radius-sm);
     background: rgba(15, 23, 42, 0.78);
     color: #dbeafe;
     font-weight: 600;
@@ -503,7 +503,7 @@ button {
     width: 100%;
     min-height: 48px;
     padding: 14px 18px;
-    border-radius: 999px;
+    border-radius: var(--radius-sm);
     background: linear-gradient(135deg, #2f7cff 0%, #00b3ff 100%);
     color: white;
     font-weight: 700;
@@ -879,7 +879,7 @@ button {
     justify-content: center;
     height: 38px;
     padding: 0 12px;
-    border-radius: 999px;
+    border-radius: var(--radius-sm);
     background: rgba(255, 255, 255, 0.06);
     font-family: var(--font-mono);
     font-size: 1.05rem;
@@ -915,7 +915,7 @@ button {
     min-width: 84px;
     min-height: 44px;
     padding: 10px 14px;
-    border-radius: 999px;
+    border-radius: var(--radius-sm);
     background: rgba(11, 18, 32, 0.88);
     color: #dbeafe;
     border: 1px solid rgba(148, 163, 184, 0.18);

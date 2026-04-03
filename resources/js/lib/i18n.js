@@ -323,6 +323,10 @@ const translations = {
             en: 'Scroll to bottom',
             ru: 'Прокрутить вниз',
         },
+        scrollToAddExercise: {
+            en: 'Scroll to add exercise',
+            ru: 'Прокрутить к добавлению упражнения',
+        },
         completeSet: {
             en: 'Complete set',
             ru: 'Завершить подход',

@@ -823,10 +823,11 @@ button {
 }
 
 .session-started {
-    display: grid;
-    justify-items: center;
-    gap: 6px;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
     padding: 6px 0 2px;
 }
 
@@ -841,6 +842,20 @@ button {
     font-size: clamp(1.05rem, 3.8vw, 1.3rem);
     font-weight: 700;
     letter-spacing: -0.01em;
+}
+
+.session-started__meta {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.session-started__separator {
+    color: var(--muted);
+}
+
+.session-started--inline .button {
+    margin-left: auto;
 }
 
 .workout-utility-bar {

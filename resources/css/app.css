@@ -840,7 +840,7 @@ button {
 
 .floating-timer__actions {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
 }
 
@@ -932,8 +932,16 @@ button {
 }
 
 .workout-utility-bar__controls {
-    grid-template-columns: repeat(4, 38px);
+    grid-template-columns: repeat(5, 38px);
     justify-content: end;
+}
+
+.workout-page {
+    gap: 15px;
+}
+
+.workout-page .exercise-list {
+    gap: 20px;
 }
 
 .workout-utility-bar__button {

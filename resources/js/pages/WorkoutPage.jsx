@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../bootstrap';
 import { SessionExerciseCard } from '../components/SessionExerciseCard';
@@ -83,6 +83,20 @@ function FlagIcon() {
     );
 }
 
+function PlusIcon() {
+    return (
+        <IconBase>
+            <path
+                d="M12 6v12M6 12h12"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.8"
+            />
+        </IconBase>
+    );
+}
+
 function playTimerSound() {
     try {
         const audio = new Audio(TIMER_SOUND);
@@ -146,6 +160,7 @@ export function WorkoutPage() {
     const [error, setError] = useState('');
     const [timeLeft, setTimeLeft] = useState(TIMER_START_SECONDS);
     const [timerRunning, setTimerRunning] = useState(false);
+    const addExerciseRef = useRef(null);
 
     useEffect(() => {
         loadActiveSession();
@@ -398,6 +413,13 @@ export function WorkoutPage() {
         });
     }
 
+    function scrollToAddExercise() {
+        addExerciseRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+        });
+    }
+
     if (loading) {
         return (
             <section className="panel">
@@ -411,9 +433,31 @@ export function WorkoutPage() {
     const timerCanReset = timerRunning || timeLeft !== TIMER_START_SECONDS;
     const timerDisplayLabel = formatTimerValue(timeLeft);
     const muscleGroupOptions = getMuscleGroupOptions(language);
+    const currentExerciseId = activeSession?.exercises?.[activeSession.exercises.length - 1]?.id ?? null;
+    const orderedExercises = useMemo(() => {
+        if (!activeSession?.exercises?.length) {
+            return [];
+        }
+
+        if (currentExerciseId === null) {
+            return activeSession.exercises;
+        }
+
+        return [...activeSession.exercises].sort((left, right) => {
+            if (left.id === currentExerciseId) {
+                return -1;
+            }
+
+            if (right.id === currentExerciseId) {
+                return 1;
+            }
+
+            return 0;
+        });
+    }, [activeSession?.exercises, currentExerciseId]);
 
     return (
-        <div className={`stack stack--page ${activeSession ? 'stack--page-with-utility' : ''}`.trim()}>
+        <div className={`stack stack--page workout-page ${activeSession ? 'stack--page-with-utility' : ''}`.trim()}>
             {activeSession ? (
                 <section className="floating-timer" aria-label={t('workout.restTimer')}>
                     <div className="floating-timer__display" aria-live="polite">
@@ -437,6 +481,14 @@ export function WorkoutPage() {
                         >
                             {t('workout.reset')}
                         </button>
+                        <button
+                            aria-label={t('workout.scrollToAddExercise')}
+                            className="button button--secondary button--compact floating-timer__button"
+                            onClick={scrollToAddExercise}
+                            type="button"
+                        >
+                            +
+                        </button>
                     </div>
                 </section>
             ) : null}
@@ -454,12 +506,12 @@ export function WorkoutPage() {
                 <>
                     {activeSession.exercises.length > 0 ? (
                         <div className="exercise-list">
-                            {activeSession.exercises.map((exercise, index) => (
+                            {orderedExercises.map((exercise) => (
                                 <SessionExerciseCard
                                     key={exercise.id}
                                     draft={draftSets[exercise.id]}
                                     exercise={exercise}
-                                    isCurrentExercise={index === activeSession.exercises.length - 1}
+                                    isCurrentExercise={exercise.id === currentExerciseId}
                                     onChangeDraft={handleDraftChange}
                                     onCompleteSet={completeSet}
                                     onRemoveExercise={removeExercise}
@@ -489,7 +541,7 @@ export function WorkoutPage() {
                         </button>
                     </section>
 
-                    <section className="panel">
+                    <section className="panel" ref={addExerciseRef}>
                         <form autoComplete="off" className="stack" onSubmit={handleAddExercise}>
                             <label className="field">
                                 <span>{t('workout.exerciseName')}</span>
@@ -661,6 +713,15 @@ export function WorkoutPage() {
                                     type="button"
                                 >
                                     <ArrowDownIcon />
+                                </button>
+                                <button
+                                    aria-label={t('workout.scrollToAddExercise')}
+                                    className="button button--secondary button--compact button--icon-only workout-utility-bar__button"
+                                    onClick={scrollToAddExercise}
+                                    title={t('workout.scrollToAddExercise')}
+                                    type="button"
+                                >
+                                    <PlusIcon />
                                 </button>
                             </div>
                         </div>

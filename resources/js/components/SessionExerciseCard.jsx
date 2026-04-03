@@ -7,18 +7,14 @@ export function SessionExerciseCard({
     exercise,
     onChangeDraft,
     onCompleteSet,
-    onDecreaseWeight,
-    onIncreaseWeight,
     onRemoveExercise,
     onToggleSelfWeight,
     saving,
 }) {
     const { language, t } = useTranslation();
     const categoryLabel = formatMuscleGroup(exercise.category, language);
-    const nextSetNumber = exercise.completedSets + 1;
-
     return (
-        <article className="exercise-card">
+        <article className="exercise-card exercise-card--active">
             <div className="exercise-card__header">
                 <div className="exercise-card__heading">
                     <h3 className="exercise-card__title">{exercise.name}</h3>
@@ -27,25 +23,11 @@ export function SessionExerciseCard({
 
             <div className="exercise-card__stats" aria-label={t('workout.exerciseSummary', { name: exercise.name })}>
                 <div className="exercise-card__stat">
-                    <span className="exercise-card__stat-label">{t('exercise.muscleGroup')}</span>
                     <strong className="exercise-card__stat-value">{categoryLabel}</strong>
                 </div>
 
                 <div className="exercise-card__stat">
-                    <span className="exercise-card__stat-label">{t('exercise.targetReps')}</span>
                     <strong className="exercise-card__stat-value">{exercise.targetReps}</strong>
-                </div>
-
-                <div className="exercise-card__stat">
-                    <span className="exercise-card__stat-label">{t('exercise.nextSet')}</span>
-                    <strong className="exercise-card__stat-value">{nextSetNumber}</strong>
-                </div>
-
-                <div className="exercise-card__stat">
-                    <span className="exercise-card__stat-label">{t('exercise.currentLoad')}</span>
-                    <strong className="exercise-card__stat-value">
-                        {formatWeightLabel(exercise.currentWeight, exercise.usesSelfWeight, language)}
-                    </strong>
                 </div>
             </div>
 
@@ -109,22 +91,7 @@ export function SessionExerciseCard({
                 )}
             </div>
 
-            <div
-                className={`exercise-card__actions ${exercise.usesSelfWeight ? 'exercise-card__actions--single' : ''}`}
-                aria-label={t('workout.exerciseActions', { name: exercise.name })}
-                role="group"
-            >
-                {!exercise.usesSelfWeight ? (
-                    <button
-                        className="button button--secondary button--compact"
-                        disabled={saving}
-                        onClick={() => onDecreaseWeight(exercise)}
-                        type="button"
-                    >
-                        {t('workout.adjustWeight', { unit: t('common.kg'), value: '-2.5' })}
-                    </button>
-                ) : null}
-
+            <div className="exercise-card__actions exercise-card__actions--single" aria-label={t('workout.exerciseActions', { name: exercise.name })} role="group">
                 <button
                     className="button button--compact exercise-card__complete"
                     disabled={saving}
@@ -133,17 +100,6 @@ export function SessionExerciseCard({
                 >
                     {t('workout.completeSet')}
                 </button>
-
-                {!exercise.usesSelfWeight ? (
-                    <button
-                        className="button button--secondary button--compact"
-                        disabled={saving}
-                        onClick={() => onIncreaseWeight(exercise)}
-                        type="button"
-                    >
-                        {t('workout.adjustWeight', { unit: t('common.kg'), value: '+2.5' })}
-                    </button>
-                ) : null}
             </div>
 
             <div className="exercise-card__secondary">

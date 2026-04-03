@@ -105,19 +105,21 @@ export function AppLayout({ children }) {
                     </div>
                 </header>
 
-                <nav className="nav-strip" aria-label={t('nav.primaryNavigation')}>
-                    {navigationItems.map((item) => (
-                        <NavLink
-                            key={item.to}
-                            className={({ isActive }) => (
-                                isActive ? 'nav-strip__link nav-strip__link--active' : 'nav-strip__link'
-                            )}
-                            to={item.to}
-                        >
-                            {item.label}
-                        </NavLink>
-                    ))}
-                </nav>
+                {navigationItems.length > 1 ? (
+                    <nav className="nav-strip" aria-label={t('nav.primaryNavigation')}>
+                        {navigationItems.map((item) => (
+                            <NavLink
+                                key={item.to}
+                                className={({ isActive }) => (
+                                    isActive ? 'nav-strip__link nav-strip__link--active' : 'nav-strip__link'
+                                )}
+                                to={item.to}
+                            >
+                                {item.label}
+                            </NavLink>
+                        ))}
+                    </nav>
+                ) : null}
 
                 <main className="page-shell">{children}</main>
             </div>

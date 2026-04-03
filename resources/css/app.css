@@ -710,12 +710,22 @@ button {
     min-width: 0;
 }
 
+.exercise-card__summary-line {
+    margin: 0;
+    color: #93c5fd;
+    font-size: 1.08rem;
+    font-weight: 500;
+    line-height: 1.45;
+    letter-spacing: 0.01em;
+    overflow-wrap: anywhere;
+}
+
 .exercise-card__inputs {
     gap: 12px;
 }
 
 .exercise-card__mode {
-    margin-bottom: 12px;
+    margin: 6px 0 12px;
 }
 
 .exercise-card__actions {
@@ -981,6 +991,37 @@ button {
 
 .set-list li + li {
     margin-top: 8px;
+}
+
+.set-progress {
+    display: grid;
+    gap: 10px;
+    margin: 16px 0 0;
+    padding: 14px 14px 14px 16px;
+    list-style: none;
+    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.42);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.set-progress li {
+    position: relative;
+    z-index: 0;
+    padding: 10px 12px;
+    border-radius: 999px;
+    color: #dbeafe;
+    border: 1px solid rgba(125, 211, 252, 0.22);
+    background: rgba(15, 23, 42, 0.6);
+    overflow: hidden;
+}
+
+.set-progress li::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    width: var(--set-progress, 0%);
+    background: linear-gradient(90deg, rgba(47, 124, 255, 0.45), rgba(34, 211, 238, 0.3));
 }
 
 .empty-inline {

@@ -27,48 +27,6 @@ function PlayIcon() {
     );
 }
 
-function ResetIcon() {
-    return (
-        <IconBase>
-            <path
-                d="M20 12a8 8 0 1 1-2.34-5.66M20 4v4h-4"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="1.8"
-            />
-        </IconBase>
-    );
-}
-
-function ArrowUpIcon() {
-    return (
-        <IconBase>
-            <path
-                d="m7 13 5-5 5 5M12 8v8"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="1.8"
-            />
-        </IconBase>
-    );
-}
-
-function ArrowDownIcon() {
-    return (
-        <IconBase>
-            <path
-                d="m7 11 5 5 5-5M12 8v8"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="1.8"
-            />
-        </IconBase>
-    );
-}
-
 function FlagIcon() {
     return (
         <IconBase>
@@ -359,7 +317,8 @@ export function WorkoutPage() {
                 ...current,
                 [exercise.id]: resetDraftAfterSet(updatedExercise ?? exercise, current[exercise.id]),
             }));
-            startTimer();
+            setTimeLeft(TIMER_START_SECONDS);
+            setTimerRunning(true);
         } catch (requestError) {
             setError(getErrorMessage(requestError, t('workout.unableToSaveSet')));
         } finally {
@@ -409,28 +368,13 @@ export function WorkoutPage() {
         }
     }
 
-    function startTimer() {
-        setTimeLeft(TIMER_START_SECONDS);
-        setTimerRunning(true);
+    function toggleTimer() {
+        setTimerRunning((current) => !current);
     }
 
     function resetTimer() {
         setTimerRunning(false);
         setTimeLeft(TIMER_START_SECONDS);
-    }
-
-    function scrollToTop() {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth',
-        });
-    }
-
-    function scrollToBottom() {
-        window.scrollTo({
-            top: document.documentElement.scrollHeight,
-            behavior: 'smooth',
-        });
     }
 
     if (loading) {
@@ -449,33 +393,6 @@ export function WorkoutPage() {
 
     return (
         <div className={`stack stack--page ${activeSession ? 'stack--page-with-utility' : ''}`.trim()}>
-            {activeSession ? (
-                <section className="floating-timer" aria-label={t('workout.restTimer')}>
-                    <div className="floating-timer__display" aria-live="polite">
-                        {timerDisplayLabel}
-                    </div>
-
-                    <div className="floating-timer__actions" role="group" aria-label={t('workout.restTimerControls')}>
-                        <button
-                            className="button button--compact floating-timer__button"
-                            disabled={timerRunning}
-                            onClick={startTimer}
-                            type="button"
-                        >
-                            {t('workout.start')}
-                        </button>
-                        <button
-                            className="button button--danger-soft button--compact floating-timer__button"
-                            disabled={!timerCanReset}
-                            onClick={resetTimer}
-                            type="button"
-                        >
-                            {t('workout.reset')}
-                        </button>
-                    </div>
-                </section>
-            ) : null}
-
             {error ? <p className="status-banner status-banner--error">{error}</p> : null}
 
             {!activeSession ? (
@@ -649,65 +566,31 @@ export function WorkoutPage() {
             )}
 
             {activeSession ? (
-                <>
-                    <div className="scroll-dock" aria-label={t('workout.scrollControls')}>
-                        <button className="scroll-dock__button" onClick={scrollToTop} type="button">
-                            {t('workout.top')}
-                        </button>
-                        <button className="scroll-dock__button" onClick={scrollToBottom} type="button">
-                            {t('workout.bottom')}
-                        </button>
-                    </div>
-
-                    <section className="workout-utility-bar" aria-label={t('workout.workoutUtilities')}>
-                        <div className="workout-utility-bar__row">
-                            <div className="workout-utility-bar__display" aria-live="polite">
-                                {timerDisplayLabel}
-                            </div>
-
-                            <div className="workout-utility-bar__controls" role="group" aria-label={t('workout.workoutUtilities')}>
-                                <button
-                                    aria-label={t('workout.startTimer')}
-                                    className="button button--compact button--icon-only workout-utility-bar__button"
-                                    disabled={timerRunning}
-                                    onClick={startTimer}
-                                    title={t('workout.startTimer')}
-                                    type="button"
-                                >
-                                    <PlayIcon />
-                                </button>
-                                <button
-                                    aria-label={t('workout.resetTimer')}
-                                    className="button button--danger-soft button--compact button--icon-only workout-utility-bar__button"
-                                    disabled={!timerCanReset}
-                                    onClick={resetTimer}
-                                    title={t('workout.resetTimer')}
-                                    type="button"
-                                >
-                                    <ResetIcon />
-                                </button>
-                                <button
-                                    aria-label={t('workout.scrollToTop')}
-                                    className="button button--ghost button--compact button--icon-only workout-utility-bar__button"
-                                    onClick={scrollToTop}
-                                    title={t('workout.top')}
-                                    type="button"
-                                >
-                                    <ArrowUpIcon />
-                                </button>
-                                <button
-                                    aria-label={t('workout.scrollToBottom')}
-                                    className="button button--ghost button--compact button--icon-only workout-utility-bar__button"
-                                    onClick={scrollToBottom}
-                                    title={t('workout.bottom')}
-                                    type="button"
-                                >
-                                    <ArrowDownIcon />
-                                </button>
-                            </div>
+                <section className="workout-utility-bar" aria-label={t('workout.workoutUtilities')}>
+                    <div className="workout-utility-bar__row">
+                        <div className="workout-utility-bar__display" aria-live="polite">
+                            {timerDisplayLabel}
                         </div>
-                    </section>
-                </>
+
+                        <div className="workout-utility-bar__controls" role="group" aria-label={t('workout.workoutUtilities')}>
+                            <button
+                                className="button button--compact workout-utility-bar__button workout-utility-bar__button--primary"
+                                onClick={toggleTimer}
+                                type="button"
+                            >
+                                {timerRunning ? t('workout.pause') : t('workout.start')}
+                            </button>
+                            <button
+                                className="button button--secondary button--compact workout-utility-bar__button"
+                                disabled={!timerCanReset}
+                                onClick={resetTimer}
+                                type="button"
+                            >
+                                {t('workout.reset')}
+                            </button>
+                        </div>
+                    </div>
+                </section>
             ) : null}
         </div>
     );

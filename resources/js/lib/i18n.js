@@ -191,6 +191,10 @@ const translations = {
             en: 'Start',
             ru: 'Старт',
         },
+        pause: {
+            en: 'Pause',
+            ru: 'Пауза',
+        },
         reset: {
             en: 'Reset',
             ru: 'Сброс',
@@ -356,6 +360,10 @@ const translations = {
         nextSet: {
             en: 'Next set',
             ru: 'Следующий подход',
+        },
+        setProgress: {
+            en: 'Set progress',
+            ru: 'Прогресс подходов',
         },
         currentLoad: {
             en: 'Current load',

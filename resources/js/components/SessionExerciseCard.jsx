@@ -75,8 +75,12 @@ export function SessionExerciseCard({
                 <label className="field field--strong">
                     <span>{t('workout.repsDone')}</span>
                     <input
+                        autoComplete="off"
+                        id={`exercise-${exercise.id}-reps`}
+                        inputMode="numeric"
                         type="number"
                         min="1"
+                        name={`exerciseReps-${exercise.id}`}
                         value={draft?.reps ?? exercise.targetReps}
                         onChange={(event) => onChangeDraft(exercise.id, 'reps', event.target.value)}
                     />
@@ -91,8 +95,12 @@ export function SessionExerciseCard({
                     <label className="field field--strong">
                         <span>{t('workout.weight')}</span>
                         <input
+                            autoComplete="off"
+                            id={`exercise-${exercise.id}-weight`}
+                            inputMode="decimal"
                             type="number"
                             min="0"
+                            name={`exerciseWeight-${exercise.id}`}
                             step="0.5"
                             value={draft?.weight ?? exercise.currentWeight}
                             onChange={(event) => onChangeDraft(exercise.id, 'weight', event.target.value)}

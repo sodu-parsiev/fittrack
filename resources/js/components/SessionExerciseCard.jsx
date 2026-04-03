@@ -4,6 +4,7 @@ import { useTranslation } from '../contexts/LanguageContext';
 export function SessionExerciseCard({
     draft,
     exercise,
+    isCurrentExercise,
     onChangeDraft,
     onCompleteSet,
     onRemoveExercise,
@@ -19,7 +20,13 @@ export function SessionExerciseCard({
     return (
         <article className="exercise-card exercise-card--active">
             <div className="exercise-card__header">
-                {completedSets > 0 ? (
+                <div aria-hidden="true" className="exercise-card__header-spacer" />
+
+                <div className="exercise-card__heading">
+                    <h3 className="exercise-card__summary-line">{summaryLine}</h3>
+                </div>
+
+                {!isCurrentExercise ? (
                     <button
                         aria-label={t('workout.deleteExercise')}
                         className="button button--danger-soft exercise-card__delete-icon"
@@ -32,11 +39,9 @@ export function SessionExerciseCard({
                             <path d="M9 4h6m-7 3h8m-7 0v10m6-10v10M7 7l1 12h8l1-12" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
                         </svg>
                     </button>
-                ) : null}
-
-                <div className="exercise-card__heading">
-                    <h3 className="exercise-card__summary-line">{summaryLine}</h3>
-                </div>
+                ) : (
+                    <div aria-hidden="true" className="exercise-card__header-spacer" />
+                )}
             </div>
 
             <div className="field exercise-card__mode">

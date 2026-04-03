@@ -454,11 +454,12 @@ export function WorkoutPage() {
                 <>
                     {activeSession.exercises.length > 0 ? (
                         <div className="exercise-list">
-                            {activeSession.exercises.map((exercise) => (
+                            {activeSession.exercises.map((exercise, index) => (
                                 <SessionExerciseCard
                                     key={exercise.id}
                                     draft={draftSets[exercise.id]}
                                     exercise={exercise}
+                                    isCurrentExercise={index === activeSession.exercises.length - 1}
                                     onChangeDraft={handleDraftChange}
                                     onCompleteSet={completeSet}
                                     onRemoveExercise={removeExercise}

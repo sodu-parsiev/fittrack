@@ -330,11 +330,6 @@ button {
     font-size: clamp(1.8rem, 2.8vw, 3rem);
 }
 
-.workout-header {
-    align-items: center;
-    flex-wrap: nowrap;
-    justify-content: flex-end;
-}
 
 .stack {
     gap: 18px;
@@ -1006,10 +1001,6 @@ button {
         align-items: stretch;
     }
 
-    .workout-header {
-        flex-direction: row;
-        align-items: center;
-    }
 
     .layout-header__controls {
         width: 100%;

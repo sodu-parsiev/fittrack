@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { api } from '../bootstrap';
 import { SessionExerciseCard } from '../components/SessionExerciseCard';
-import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import { getErrorMessage } from '../lib/errors';
 import { getMuscleGroupOptions } from '../lib/muscleGroups';
@@ -69,20 +67,6 @@ function ArrowDownIcon() {
     );
 }
 
-function FlagIcon() {
-    return (
-        <IconBase>
-            <path
-                d="M6 4v16M6 5h9l-1.5 3L15 11H6"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="1.8"
-            />
-        </IconBase>
-    );
-}
-
 function roundWeight(value) {
     return Math.max(0, Math.round(value * 100) / 100);
 }
@@ -133,9 +117,7 @@ function resetDraftAfterSet(exercise, currentDraft = null) {
 }
 
 export function WorkoutPage() {
-    const navigate = useNavigate();
     const { language, locale, t } = useTranslation();
-    const { user } = useAuth();
     const [activeSession, setActiveSession] = useState(null);
     const [draftSets, setDraftSets] = useState({});
     const [exerciseForm, setExerciseForm] = useState({
@@ -385,30 +367,6 @@ export function WorkoutPage() {
         }
     }
 
-    async function finishWorkout() {
-        if (!activeSession) {
-            return;
-        }
-
-        setSaving(true);
-        setError('');
-
-        try {
-            await api.patch(`/api/sessions/${activeSession.id}`, {
-                status: 'completed',
-            });
-
-            setActiveSession(null);
-            if (user) {
-                navigate('/app/history');
-            }
-        } catch (requestError) {
-            setError(getErrorMessage(requestError, t('workout.unableToFinish')));
-        } finally {
-            setSaving(false);
-        }
-    }
-
     function startTimer() {
         setTimeLeft(TIMER_START_SECONDS);
         setTimerRunning(true);
@@ -449,20 +407,6 @@ export function WorkoutPage() {
 
     return (
         <div className={`stack stack--page ${activeSession ? 'stack--page-with-utility' : ''}`.trim()}>
-            {activeSession ? (
-                <section className="page-header page-header--actions-only workout-header">
-                    <button
-                        className="button button--secondary button--auto"
-                        disabled={saving}
-                        onClick={finishWorkout}
-                        type="button"
-                    >
-                        <FlagIcon />
-                        <span>{t('workout.finishWorkout')}</span>
-                    </button>
-                </section>
-            ) : null}
-
             {activeSession ? (
                 <section className="floating-timer" aria-label={t('workout.restTimer')}>
                     <div className="floating-timer__display" aria-live="polite">

@@ -13,26 +13,17 @@ export function SessionExerciseCard({
 }) {
     const { language, t } = useTranslation();
     const categoryLabel = formatMuscleGroup(exercise.category, language);
+    const summaryLine = `${exercise.name}/${categoryLabel}/${exercise.targetReps}/${exercise.sets.length}`;
+
     return (
         <article className="exercise-card exercise-card--active">
             <div className="exercise-card__header">
                 <div className="exercise-card__heading">
-                    <h3 className="exercise-card__title">{exercise.name}</h3>
-                </div>
-            </div>
-
-            <div className="exercise-card__stats" aria-label={t('workout.exerciseSummary', { name: exercise.name })}>
-                <div className="exercise-card__stat">
-                    <strong className="exercise-card__stat-value">{categoryLabel}</strong>
-                </div>
-
-                <div className="exercise-card__stat">
-                    <strong className="exercise-card__stat-value">{exercise.targetReps}</strong>
+                    <p className="exercise-card__summary-line">{summaryLine}</p>
                 </div>
             </div>
 
             <div className="field exercise-card__mode">
-                <span>{t('workout.weightType')}</span>
                 <div className="choice-row" role="group" aria-label={t('workout.exerciseWeightType', { name: exercise.name })}>
                     <button
                         className={`choice-chip ${!exercise.usesSelfWeight ? 'choice-chip--active' : ''}`}
@@ -102,21 +93,26 @@ export function SessionExerciseCard({
                 </button>
             </div>
 
-            <div className="exercise-card__secondary">
-                <button
-                    className="button button--danger-soft button--compact button--auto"
-                    disabled={saving}
-                    onClick={() => onRemoveExercise(exercise)}
-                    type="button"
-                >
-                    {t('workout.deleteExercise')}
-                </button>
-            </div>
+            {exercise.sets.length > 0 ? (
+                <div className="exercise-card__secondary">
+                    <button
+                        className="button button--danger-soft button--compact button--auto"
+                        disabled={saving}
+                        onClick={() => onRemoveExercise(exercise)}
+                        type="button"
+                    >
+                        {t('workout.deleteExercise')}
+                    </button>
+                </div>
+            ) : null}
 
             {exercise.sets.length > 0 ? (
-                <ol className="set-list">
-                    {exercise.sets.map((set) => (
-                        <li key={set.id}>
+                <ol className="set-progress">
+                    {exercise.sets.map((set, index) => (
+                        <li
+                            key={set.id}
+                            style={{ '--set-progress': `${((index + 1) / exercise.sets.length) * 100}%` }}
+                        >
                             {t('exercise.setEntry', {
                                 number: set.setNumber,
                                 reps: set.reps,

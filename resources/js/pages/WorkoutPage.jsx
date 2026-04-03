@@ -83,10 +83,6 @@ function FlagIcon() {
     );
 }
 
-function roundWeight(value) {
-    return Math.max(0, Math.round(value * 100) / 100);
-}
-
 function playTimerSound() {
     try {
         const audio = new Audio(TIMER_SOUND);
@@ -269,37 +265,6 @@ export function WorkoutPage() {
                 [field]: value,
             },
         }));
-    }
-
-    async function updateExerciseWeight(exercise, delta) {
-        if (exercise.usesSelfWeight) {
-            return;
-        }
-
-        setSaving(true);
-        setError('');
-
-        try {
-            const response = await api.patch(`/api/exercises/${exercise.id}`, {
-                current_weight: roundWeight(Number(exercise.currentWeight) + delta),
-            });
-
-            const updatedSession = response.data;
-            const updatedExercise = updatedSession.exercises.find((item) => item.id === exercise.id);
-
-            setActiveSession(updatedSession);
-            setDraftSets((current) => ({
-                ...current,
-                [exercise.id]: {
-                    ...current[exercise.id],
-                    weight: String(updatedExercise?.currentWeight ?? roundWeight(Number(exercise.currentWeight) + delta)),
-                },
-            }));
-        } catch (requestError) {
-            setError(getErrorMessage(requestError, t('workout.unableToUpdateWeight')));
-        } finally {
-            setSaving(false);
-        }
     }
 
     async function updateExerciseWeightType(exercise, usesSelfWeight) {
@@ -488,28 +453,20 @@ export function WorkoutPage() {
             ) : (
                 <>
                     {activeSession.exercises.length > 0 ? (
-                        <section className="panel">
-                            <div className="panel__header">
-                                <h3 className="panel__title">{t('workout.currentExercises')}</h3>
-                            </div>
-
-                            <div className="exercise-list">
-                                {activeSession.exercises.map((exercise) => (
-                                    <SessionExerciseCard
-                                        key={exercise.id}
-                                        draft={draftSets[exercise.id]}
-                                        exercise={exercise}
-                                        onChangeDraft={handleDraftChange}
-                                        onCompleteSet={completeSet}
-                                        onDecreaseWeight={(selectedExercise) => updateExerciseWeight(selectedExercise, -2.5)}
-                                        onIncreaseWeight={(selectedExercise) => updateExerciseWeight(selectedExercise, 2.5)}
-                                        onRemoveExercise={removeExercise}
-                                        onToggleSelfWeight={updateExerciseWeightType}
-                                        saving={saving}
-                                    />
-                                ))}
-                            </div>
-                        </section>
+                        <div className="exercise-list">
+                            {activeSession.exercises.map((exercise) => (
+                                <SessionExerciseCard
+                                    key={exercise.id}
+                                    draft={draftSets[exercise.id]}
+                                    exercise={exercise}
+                                    onChangeDraft={handleDraftChange}
+                                    onCompleteSet={completeSet}
+                                    onRemoveExercise={removeExercise}
+                                    onToggleSelfWeight={updateExerciseWeightType}
+                                    saving={saving}
+                                />
+                            ))}
+                        </div>
                     ) : null}
 
                     <section className="session-started session-started--inline" aria-label={t('workout.summary')}>

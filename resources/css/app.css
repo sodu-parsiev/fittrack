@@ -640,9 +640,17 @@ button {
     min-width: 0;
 }
 
+.exercise-card--active {
+    border-color: rgba(45, 212, 191, 0.75);
+    box-shadow:
+        0 0 0 1px rgba(56, 189, 248, 0.45),
+        0 0 22px rgba(45, 212, 191, 0.28),
+        var(--shadow);
+}
+
 .exercise-card__stats {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
     margin: 18px 0 16px;
 }

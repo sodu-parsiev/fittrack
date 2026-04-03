@@ -635,7 +635,7 @@ button {
 }
 
 .exercise-card {
-    padding: 22px;
+    padding: 12px;
     border-radius: var(--radius-md);
     min-width: 0;
 }
@@ -684,9 +684,9 @@ button {
 .history-card summary,
 .history-exercise__header {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: flex-start;
-    gap: 18px;
+    gap: 12px;
 }
 
 .exercise-card__title,
@@ -722,29 +722,12 @@ button {
     overflow-wrap: anywhere;
 }
 
-.exercise-card__header-spacer,
-.exercise-card__delete-icon {
-    width: 34px;
-    min-width: 34px;
-    min-height: 34px;
-}
-
-.exercise-card__delete-icon {
-    padding: 0;
-    border-radius: 10px;
-}
-
-.exercise-card__delete-icon svg {
-    width: 16px;
-    height: 16px;
-    margin: auto;
-}
 .exercise-card__inputs {
     gap: 12px;
 }
 
 .exercise-card__mode {
-    margin: 6px 0 12px;
+    margin: 12px 0;
 }
 
 .exercise-card__actions {
@@ -760,6 +743,7 @@ button {
 
 .exercise-card__actions--single {
     grid-template-columns: 1fr;
+    gap: 12px;
 }
 
 .exercise-card__secondary {

@@ -474,13 +474,14 @@ button {
 }
 
 .choice-chip {
-    min-height: 42px;
-    padding: 10px 14px;
+    min-height: 38px;
+    padding: 8px 10px;
     border: 0;
     border-radius: 0;
     background: transparent;
     color: #cbd5e1;
     font-weight: 500;
+    font-size: 0.88rem;
     cursor: pointer;
     transition: background-color 160ms ease, color 160ms ease;
 }
@@ -559,15 +560,16 @@ button {
 }
 
 .button--compact {
-    min-height: 44px;
-    padding: 11px 14px;
-    font-size: 0.95rem;
+    min-height: 40px;
+    padding: 9px 12px;
+    font-size: 0.9rem;
     white-space: nowrap;
 }
 
 .button--icon-only {
-    width: 44px;
-    min-width: 44px;
+    width: 40px;
+    min-width: 40px;
+    min-height: 40px;
     padding: 0;
     gap: 0;
 }
@@ -626,63 +628,62 @@ button {
 
 .exercise-list,
 .history-list {
-    gap: 20px;
+    gap: 14px;
 }
 
 .exercise-card {
-    padding: 18px;
+    padding: 14px;
     border-radius: var(--radius-md);
     min-width: 0;
 }
 
+.exercise-card--active {
+    border-color: rgba(110, 231, 183, 0.45);
+}
+
 .exercise-card__summary {
     display: grid;
-    gap: 8px;
-    margin: 12px 0 0;
-    padding: 12px;
-    border-radius: var(--radius-sm);
-    background: #0f1622;
-    border: 1px solid rgba(148, 163, 184, 0.16);
+    gap: 6px;
+    margin: 8px 0 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .exercise-card__summary-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: baseline;
-    gap: 12px;
+    gap: 2px;
 }
 
 .exercise-card__summary dt {
     color: var(--muted);
-    font-size: 0.86rem;
+    font-size: 0.72rem;
 }
 
 .exercise-card__summary dd {
     margin: 0;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     font-weight: 700;
 }
 
 .exercise-card__section {
     display: grid;
-    gap: 10px;
-    margin-top: 14px;
+    gap: 8px;
+    margin-top: 10px;
 }
 
 .exercise-card__section-label {
-    font-size: 0.86rem;
+    font-size: 0.8rem;
     color: var(--muted);
 }
 
 .exercise-card__adjustments {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(2, 40px);
+    gap: 8px;
 }
 
 .exercise-card__complete {
-    min-height: 54px;
-    font-size: 1rem;
+    min-height: 46px;
+    font-size: 0.96rem;
 }
 
 .exercise-card__stat {
@@ -711,7 +712,7 @@ button {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 18px;
+    gap: 10px;
 }
 
 .exercise-card__title,
@@ -732,12 +733,12 @@ button {
 }
 
 .exercise-card__inputs {
-    gap: 14px;
-    margin-top: 14px;
+    gap: 10px;
+    margin-top: 10px;
 }
 
 .exercise-card__mode {
-    margin-top: 14px;
+    margin-top: 10px;
 }
 
 .exercise-card__actions {
@@ -753,9 +754,11 @@ button {
 }
 
 .exercise-card__secondary {
-    margin-top: 18px;
-    padding-top: 14px;
+    margin-top: 10px;
+    padding-top: 10px;
     border-top: 1px solid rgba(148, 163, 184, 0.14);
+    display: flex;
+    justify-content: flex-end;
 }
 
 .badge-row {
@@ -906,9 +909,9 @@ button {
     left: 50%;
     bottom: 0;
     z-index: 40;
-    width: min(calc(100% - 20px), 420px);
+    width: min(calc(100% - 16px), 390px);
     display: block;
-    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
     border: 1px solid rgba(148, 163, 184, 0.2);
     border-radius: 14px 14px 0 0;
     background: #111827;
@@ -923,11 +926,11 @@ button {
 .workout-utility-bar__row,
 .workout-utility-bar__controls {
     display: grid;
-    gap: 10px;
+    gap: 8px;
 }
 
 .workout-utility-bar__row {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr auto;
     align-items: center;
 }
 
@@ -935,12 +938,12 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 42px;
+    height: 40px;
     padding: 0 12px;
     border-radius: var(--radius-sm);
     background: #0f1622;
     font-family: var(--font-mono);
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 800;
     letter-spacing: -0.03em;
     line-height: 1;
@@ -948,11 +951,11 @@ button {
 }
 
 .workout-utility-bar__controls {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 40px);
 }
 
 .workout-utility-bar__button {
-    min-height: 42px;
+    min-height: 40px;
 }
 
 .scroll-dock {
@@ -996,11 +999,11 @@ button {
 }
 
 .exercise-card .set-list {
-    margin-top: 16px;
-    padding: 14px 16px 14px 36px;
-    border-radius: 16px;
-    background: rgba(15, 23, 42, 0.42);
-    border: 1px solid rgba(148, 163, 184, 0.12);
+    margin-top: 10px;
+    padding: 10px 12px 10px 28px;
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.35);
+    border: 1px solid rgba(148, 163, 184, 0.1);
 }
 
 .set-list li + li {
@@ -1101,8 +1104,7 @@ button {
     }
 
     .field-row,
-    .button-row,
-    .exercise-card__summary {
+    .button-row {
         grid-template-columns: 1fr;
     }
 
@@ -1116,10 +1118,6 @@ button {
 
     .workout-form__pair,
     .exercise-card__inputs {
-        grid-template-columns: 1fr;
-    }
-
-    .exercise-card__adjustments {
         grid-template-columns: 1fr;
     }
 
@@ -1143,10 +1141,6 @@ button {
     .metric-pill__value {
         margin-top: 6px;
         font-size: 1rem;
-    }
-
-    .exercise-card {
-        padding: 18px;
     }
 
     .exercise-card__secondary {

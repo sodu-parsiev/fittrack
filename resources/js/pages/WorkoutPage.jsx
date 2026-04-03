@@ -27,11 +27,33 @@ function PlayIcon() {
     );
 }
 
+function PauseIcon() {
+    return (
+        <IconBase>
+            <path d="M8.5 6.5v11M15.5 6.5v11" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
+        </IconBase>
+    );
+}
+
 function FlagIcon() {
     return (
         <IconBase>
             <path
                 d="M6 4v16M6 5h9l-1.5 3L15 11H6"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.8"
+            />
+        </IconBase>
+    );
+}
+
+function ResetIcon() {
+    return (
+        <IconBase>
+            <path
+                d="M6 7.5V4.8m0 2.7h2.8M6.4 12a5.6 5.6 0 1 0 2-4.3"
                 stroke="currentColor"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -390,6 +412,7 @@ export function WorkoutPage() {
     const timerCanReset = timerRunning || timeLeft !== TIMER_START_SECONDS;
     const timerDisplayLabel = formatTimerValue(timeLeft);
     const muscleGroupOptions = getMuscleGroupOptions(language);
+    const currentExercise = activeSession?.exercises[0] ?? null;
 
     return (
         <div className={`stack stack--page ${activeSession ? 'stack--page-with-utility' : ''}`.trim()}>
@@ -404,29 +427,19 @@ export function WorkoutPage() {
                 </section>
             ) : (
                 <>
-                    {activeSession.exercises.length > 0 ? (
-                        <section className="panel">
-                            <div className="panel__header">
-                                <h3 className="panel__title">{t('workout.currentExercises')}</h3>
-                            </div>
-
-                            <div className="exercise-list">
-                                {activeSession.exercises.map((exercise) => (
-                                    <SessionExerciseCard
-                                        key={exercise.id}
-                                        draft={draftSets[exercise.id]}
-                                        exercise={exercise}
-                                        onChangeDraft={handleDraftChange}
-                                        onCompleteSet={completeSet}
-                                        onDecreaseWeight={(selectedExercise) => updateExerciseWeight(selectedExercise, -2.5)}
-                                        onIncreaseWeight={(selectedExercise) => updateExerciseWeight(selectedExercise, 2.5)}
-                                        onRemoveExercise={removeExercise}
-                                        onToggleSelfWeight={updateExerciseWeightType}
-                                        saving={saving}
-                                    />
-                                ))}
-                            </div>
-                        </section>
+                    {currentExercise ? (
+                        <SessionExerciseCard
+                            key={currentExercise.id}
+                            draft={draftSets[currentExercise.id]}
+                            exercise={currentExercise}
+                            onChangeDraft={handleDraftChange}
+                            onCompleteSet={completeSet}
+                            onDecreaseWeight={(selectedExercise) => updateExerciseWeight(selectedExercise, -2.5)}
+                            onIncreaseWeight={(selectedExercise) => updateExerciseWeight(selectedExercise, 2.5)}
+                            onRemoveExercise={removeExercise}
+                            onToggleSelfWeight={updateExerciseWeightType}
+                            saving={saving}
+                        />
                     ) : null}
 
                     <section className="session-started session-started--inline" aria-label={t('workout.summary')}>
@@ -574,19 +587,21 @@ export function WorkoutPage() {
 
                         <div className="workout-utility-bar__controls" role="group" aria-label={t('workout.workoutUtilities')}>
                             <button
-                                className="button button--compact workout-utility-bar__button workout-utility-bar__button--primary"
+                                className="button button--compact button--icon-only workout-utility-bar__button workout-utility-bar__button--primary"
                                 onClick={toggleTimer}
                                 type="button"
+                                aria-label={timerRunning ? t('workout.pause') : t('workout.start')}
                             >
-                                {timerRunning ? t('workout.pause') : t('workout.start')}
+                                {timerRunning ? <PauseIcon /> : <PlayIcon />}
                             </button>
                             <button
-                                className="button button--secondary button--compact workout-utility-bar__button"
+                                className="button button--secondary button--compact button--icon-only workout-utility-bar__button"
                                 disabled={!timerCanReset}
                                 onClick={resetTimer}
                                 type="button"
+                                aria-label={t('workout.reset')}
                             >
-                                {t('workout.reset')}
+                                <ResetIcon />
                             </button>
                         </div>
                     </div>

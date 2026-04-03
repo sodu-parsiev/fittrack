@@ -2,6 +2,44 @@ import { formatMuscleGroup } from '../lib/muscleGroups';
 import { formatWeightLabel } from '../lib/exerciseWeight';
 import { useTranslation } from '../contexts/LanguageContext';
 
+function IconBase({ children }) {
+    return (
+        <svg aria-hidden="true" className="button__icon" fill="none" viewBox="0 0 24 24">
+            {children}
+        </svg>
+    );
+}
+
+function MinusIcon() {
+    return (
+        <IconBase>
+            <path d="M6 12h12" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
+        </IconBase>
+    );
+}
+
+function PlusIcon() {
+    return (
+        <IconBase>
+            <path d="M12 6v12M6 12h12" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
+        </IconBase>
+    );
+}
+
+function TrashIcon() {
+    return (
+        <IconBase>
+            <path
+                d="M8 7h8M9 7V5h6v2M8 7l.7 11h6.6L16 7M10.5 10.5v5M13.5 10.5v5"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.7"
+            />
+        </IconBase>
+    );
+}
+
 export function SessionExerciseCard({
     draft,
     exercise,
@@ -19,7 +57,7 @@ export function SessionExerciseCard({
     const setProgressLabel = `${exercise.completedSets} / ${nextSetNumber}`;
 
     return (
-        <article className="exercise-card">
+        <article className="exercise-card exercise-card--active">
             <header className="exercise-card__header">
                 <h3 className="exercise-card__title">{exercise.name}</h3>
 
@@ -107,20 +145,22 @@ export function SessionExerciseCard({
                 {!exercise.usesSelfWeight ? (
                     <div className="exercise-card__adjustments" aria-label={t('workout.exerciseActions', { name: exercise.name })} role="group">
                         <button
-                            className="button button--secondary button--compact"
+                            className="button button--secondary button--compact button--icon-only"
                             disabled={saving}
                             onClick={() => onDecreaseWeight(exercise)}
                             type="button"
+                            aria-label={t('workout.adjustWeight', { unit: t('common.kg'), value: '-2.5' })}
                         >
-                            {t('workout.adjustWeight', { unit: t('common.kg'), value: '-2.5' })}
+                            <MinusIcon />
                         </button>
                         <button
-                            className="button button--secondary button--compact"
+                            className="button button--secondary button--compact button--icon-only"
                             disabled={saving}
                             onClick={() => onIncreaseWeight(exercise)}
                             type="button"
+                            aria-label={t('workout.adjustWeight', { unit: t('common.kg'), value: '+2.5' })}
                         >
-                            {t('workout.adjustWeight', { unit: t('common.kg'), value: '+2.5' })}
+                            <PlusIcon />
                         </button>
                     </div>
                 ) : null}
@@ -143,12 +183,13 @@ export function SessionExerciseCard({
 
             <div className="exercise-card__secondary">
                 <button
-                    className="button button--danger-soft button--compact"
+                    className="button button--danger-soft button--compact button--icon-only"
                     disabled={saving}
                     onClick={() => onRemoveExercise(exercise)}
                     type="button"
+                    aria-label={t('workout.deleteExercise')}
                 >
-                    {t('workout.deleteExercise')}
+                    <TrashIcon />
                 </button>
             </div>
 

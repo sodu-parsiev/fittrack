@@ -1,5 +1,4 @@
 import { formatMuscleGroup } from '../lib/muscleGroups';
-import { formatWeightLabel } from '../lib/exerciseWeight';
 import { useTranslation } from '../contexts/LanguageContext';
 
 export function SessionExerciseCard({
@@ -13,13 +12,30 @@ export function SessionExerciseCard({
 }) {
     const { language, t } = useTranslation();
     const categoryLabel = formatMuscleGroup(exercise.category, language);
-    const summaryLine = `${exercise.name}/${categoryLabel}/${exercise.targetReps}/${exercise.sets.length}`;
+    const completedSets = exercise.sets.length;
+    const totalSegments = Math.max(completedSets + 4, 12);
+    const summaryLine = `${exercise.name} / ${categoryLabel} / ${exercise.targetReps} / ${completedSets}`;
 
     return (
         <article className="exercise-card exercise-card--active">
             <div className="exercise-card__header">
+                {completedSets > 0 ? (
+                    <button
+                        aria-label={t('workout.deleteExercise')}
+                        className="button button--danger-soft exercise-card__delete-icon"
+                        disabled={saving}
+                        onClick={() => onRemoveExercise(exercise)}
+                        title={t('workout.deleteExercise')}
+                        type="button"
+                    >
+                        <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+                            <path d="M9 4h6m-7 3h8m-7 0v10m6-10v10M7 7l1 12h8l1-12" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+                        </svg>
+                    </button>
+                ) : null}
+
                 <div className="exercise-card__heading">
-                    <p className="exercise-card__summary-line">{summaryLine}</p>
+                    <h3 className="exercise-card__summary-line">{summaryLine}</h3>
                 </div>
             </div>
 
@@ -93,34 +109,15 @@ export function SessionExerciseCard({
                 </button>
             </div>
 
-            {exercise.sets.length > 0 ? (
-                <div className="exercise-card__secondary">
-                    <button
-                        className="button button--danger-soft button--compact button--auto"
-                        disabled={saving}
-                        onClick={() => onRemoveExercise(exercise)}
-                        type="button"
-                    >
-                        {t('workout.deleteExercise')}
-                    </button>
-                </div>
-            ) : null}
-
-            {exercise.sets.length > 0 ? (
-                <ol className="set-progress">
-                    {exercise.sets.map((set, index) => (
-                        <li
-                            key={set.id}
-                            style={{ '--set-progress': `${((index + 1) / exercise.sets.length) * 100}%` }}
-                        >
-                            {t('exercise.setEntry', {
-                                number: set.setNumber,
-                                reps: set.reps,
-                                weight: formatWeightLabel(set.weight, set.usesSelfWeight, language),
-                            })}
-                        </li>
+            {completedSets > 0 ? (
+                <div className="set-progress" aria-label={t('workout.sets')}>
+                    {Array.from({ length: totalSegments }).map((_, index) => (
+                        <span
+                            className={`set-progress__segment ${index < completedSets ? 'set-progress__segment--done' : ''}`}
+                            key={`${exercise.id}-segment-${index}`}
+                        />
                     ))}
-                </ol>
+                </div>
             ) : null}
         </article>
     );

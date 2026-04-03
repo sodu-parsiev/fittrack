@@ -6,6 +6,8 @@
 @source '../**/*.js';
 
 :root {
+    --app-height: 100vh;
+    --keyboard-inset: 0px;
     --bg: #09101d;
     --bg-soft: #101828;
     --panel: rgba(15, 23, 42, 0.76);
@@ -27,7 +29,13 @@
 }
 
 * {
-    box-sizing: border-box; /** test */
+    box-sizing: border-box;
+}
+
+@supports (height: 100dvh) {
+    :root {
+        --app-height: 100dvh;
+    }
 }
 
 html {
@@ -36,7 +44,7 @@ html {
 
 body {
     margin: 0;
-    min-height: 100vh;
+    min-height: var(--app-height);
     font-family: var(--font-sans);
     overflow-x: hidden;
     background:
@@ -62,13 +70,13 @@ button {
 }
 
 #app {
-    min-height: 100vh;
+    min-height: var(--app-height);
 }
 
 .auth-screen,
 .layout-shell {
     position: relative;
-    min-height: 100vh;
+    min-height: var(--app-height);
 }
 
 .auth-shell,
@@ -79,7 +87,7 @@ button {
 }
 
 .auth-shell {
-    min-height: 100vh;
+    min-height: var(--app-height);
     display: grid;
     grid-template-columns: 1.15fr 0.95fr;
     gap: 24px;
@@ -393,6 +401,7 @@ button {
         box-shadow 160ms ease,
         transform 160ms ease,
         background-color 160ms ease;
+    font-size: 16px;
 }
 
 .field input:focus,
@@ -430,6 +439,13 @@ button {
 
 .field select option:disabled {
     color: var(--muted);
+}
+
+.field input:-webkit-autofill,
+.field input:-webkit-autofill:hover,
+.field input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--text);
+    transition: background-color 9999s ease-out;
 }
 
 .field__hint {
@@ -862,6 +878,11 @@ button {
     display: none;
 }
 
+:root.ios-keyboard-open .workout-utility-bar,
+:root.ios-keyboard-open .scroll-dock {
+    display: none;
+}
+
 .workout-utility-bar__row,
 .workout-utility-bar__controls {
     display: grid;
@@ -1058,7 +1079,7 @@ button {
     }
 
     .stack--page-with-utility {
-        padding-bottom: calc(88px + env(safe-area-inset-bottom));
+        padding-bottom: calc(88px + env(safe-area-inset-bottom) + var(--keyboard-inset));
     }
 
     .floating-timer {

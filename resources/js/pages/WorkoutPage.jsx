@@ -532,11 +532,18 @@ export function WorkoutPage() {
                     </section>
 
                     <section className="panel">
-                        <form className="stack" onSubmit={handleAddExercise}>
+                        <form autoComplete="off" className="stack" onSubmit={handleAddExercise}>
                             <label className="field">
                                 <span>{t('workout.exerciseName')}</span>
                                 <input
+                                    autoCapitalize="words"
+                                    autoComplete="off"
+                                    autoCorrect="off"
+                                    id="exercise-label-input"
+                                    inputMode="text"
+                                    name="exerciseLabel"
                                     required
+                                    spellCheck={false}
                                     type="text"
                                     placeholder={t('workout.exercisePlaceholder')}
                                     value={exerciseForm.name}
@@ -550,6 +557,9 @@ export function WorkoutPage() {
                             <label className="field">
                                 <span>{t('workout.muscleGroup')}</span>
                                 <select
+                                    autoComplete="off"
+                                    id="exercise-muscle-group-select"
+                                    name="exerciseGroup"
                                     required
                                     value={exerciseForm.category}
                                     onChange={(event) => setExerciseForm((current) => ({
@@ -596,8 +606,12 @@ export function WorkoutPage() {
                                 <label className="field">
                                     <span>{t('workout.weightKg', { unit: t('common.kg') })}</span>
                                     <input
+                                        autoComplete="off"
                                         disabled={exerciseForm.usesSelfWeight}
+                                        id="exercise-load-input"
+                                        inputMode="decimal"
                                         min="0"
+                                        name="exerciseLoad"
                                         step="0.5"
                                         type="number"
                                         value={exerciseForm.currentWeight}
@@ -611,7 +625,11 @@ export function WorkoutPage() {
                                 <label className="field">
                                     <span>{t('workout.targetReps')}</span>
                                     <input
+                                        autoComplete="off"
+                                        id="exercise-target-reps-input"
+                                        inputMode="numeric"
                                         min="1"
+                                        name="exerciseTargetReps"
                                         type="number"
                                         value={exerciseForm.targetReps}
                                         onChange={(event) => setExerciseForm((current) => ({

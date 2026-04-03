@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from './components/AppLayout';
@@ -102,6 +102,45 @@ function AppRouter() {
     );
 }
 
+function ViewportKeyboardManager() {
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return undefined;
+        }
+
+        const root = document.documentElement;
+        const viewport = window.visualViewport;
+
+        if (!viewport) {
+            return undefined;
+        }
+
+        const KEYBOARD_THRESHOLD = 120;
+
+        const syncViewportState = () => {
+            const keyboardHeight = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
+
+            root.style.setProperty('--keyboard-inset', `${keyboardHeight}px`);
+            root.classList.toggle('ios-keyboard-open', keyboardHeight > KEYBOARD_THRESHOLD);
+        };
+
+        syncViewportState();
+        viewport.addEventListener('resize', syncViewportState);
+        viewport.addEventListener('scroll', syncViewportState);
+        window.addEventListener('orientationchange', syncViewportState);
+
+        return () => {
+            viewport.removeEventListener('resize', syncViewportState);
+            viewport.removeEventListener('scroll', syncViewportState);
+            window.removeEventListener('orientationchange', syncViewportState);
+            root.classList.remove('ios-keyboard-open');
+            root.style.removeProperty('--keyboard-inset');
+        };
+    }, []);
+
+    return null;
+}
+
 const rootElement = document.getElementById('app');
 
 if (rootElement) {
@@ -110,6 +149,7 @@ if (rootElement) {
             <LanguageProvider>
                 <BrowserRouter>
                     <AuthProvider>
+                        <ViewportKeyboardManager />
                         <AppRouter />
                     </AuthProvider>
                 </BrowserRouter>

@@ -420,16 +420,6 @@ export function WorkoutPage() {
         });
     }
 
-    if (loading) {
-        return (
-            <section className="panel">
-                <div className="panel__header">
-                    <h2 className="panel__title">{t('common.loading')}</h2>
-                </div>
-            </section>
-        );
-    }
-
     const timerCanReset = timerRunning || timeLeft !== TIMER_START_SECONDS;
     const timerDisplayLabel = formatTimerValue(timeLeft);
     const muscleGroupOptions = getMuscleGroupOptions(language);
@@ -455,6 +445,16 @@ export function WorkoutPage() {
             return 0;
         });
     }, [activeSession?.exercises, currentExerciseId]);
+
+    if (loading) {
+        return (
+            <section className="panel">
+                <div className="panel__header">
+                    <h2 className="panel__title">{t('common.loading')}</h2>
+                </div>
+            </section>
+        );
+    }
 
     return (
         <div className={`stack stack--page workout-page ${activeSession ? 'stack--page-with-utility' : ''}`.trim()}>

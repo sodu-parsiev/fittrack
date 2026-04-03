@@ -821,6 +821,27 @@ button {
     min-width: 0;
 }
 
+.session-started {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    text-align: center;
+    padding: 6px 0 2px;
+}
+
+.session-started__label {
+    color: #7dd3fc;
+    font-size: 0.76rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.session-started__value {
+    font-size: clamp(1.05rem, 3.8vw, 1.3rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
 .workout-utility-bar {
     display: none;
 }
@@ -840,7 +861,7 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 44px;
+    height: 38px;
     padding: 0 12px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.06);
@@ -853,12 +874,16 @@ button {
 }
 
 .workout-utility-bar__controls {
-    grid-template-columns: repeat(4, 44px);
+    grid-template-columns: repeat(4, 38px);
     justify-content: end;
 }
 
 .workout-utility-bar__button {
     justify-self: end;
+    width: 38px;
+    min-width: 38px;
+    min-height: 38px;
+    padding: 0;
 }
 
 .scroll-dock {
@@ -1030,7 +1055,7 @@ button {
         z-index: 40;
         display: block;
         width: min(calc(100% - 20px), 720px);
-        padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+        padding: 6px 10px;
         border: 1px solid rgba(125, 211, 252, 0.18);
         border-radius: 18px;
         background:

@@ -5,7 +5,6 @@ import { SessionExerciseCard } from '../components/SessionExerciseCard';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import { getErrorMessage } from '../lib/errors';
-import { formatWeightValue } from '../lib/exerciseWeight';
 import { getMuscleGroupOptions } from '../lib/muscleGroups';
 
 const TIMER_START_SECONDS = 60;
@@ -526,27 +525,11 @@ export function WorkoutPage() {
                         </section>
                     ) : null}
 
-                    <section className="metric-grid" aria-label={t('workout.summary')}>
-                        <article className="metric-pill">
-                            <span className="metric-pill__label">{t('workout.started')}</span>
-                            <strong className="metric-pill__value">
-                                {formatDateTime(activeSession.startedAt, locale, t('common.justNow'))}
-                            </strong>
-                        </article>
-                        <article className="metric-pill">
-                            <span className="metric-pill__label">{t('workout.exercises')}</span>
-                            <strong className="metric-pill__value">{activeSession.exerciseCount}</strong>
-                        </article>
-                        <article className="metric-pill">
-                            <span className="metric-pill__label">{t('workout.sets')}</span>
-                            <strong className="metric-pill__value">{activeSession.totalSets}</strong>
-                        </article>
-                        <article className="metric-pill">
-                            <span className="metric-pill__label">{t('workout.volume')}</span>
-                            <strong className="metric-pill__value">
-                                {formatWeightValue(activeSession.totalVolume, locale)} {t('common.kg')}
-                            </strong>
-                        </article>
+                    <section className="session-started" aria-label={t('workout.summary')}>
+                        <span className="session-started__label">{t('workout.started')}</span>
+                        <strong className="session-started__value">
+                            {formatDateTime(activeSession.startedAt, locale, t('common.justNow'))}
+                        </strong>
                     </section>
 
                     <section className="panel">

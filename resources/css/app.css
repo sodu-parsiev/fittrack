@@ -335,9 +335,10 @@ button {
     flex-wrap: nowrap;
 }
 
-.workout-header__title {
-    margin: 0;
-    font-size: 1.7rem;
+.stack--page-with-utility .workout-header {
+    margin-top: -84px;
+    margin-bottom: 60px;
+    justify-content: flex-end;
 }
 
 .stack {
@@ -1013,6 +1014,8 @@ button {
     .workout-header {
         flex-direction: row;
         align-items: center;
+        margin-top: 0;
+        margin-bottom: 0;
     }
 
     .layout-header__controls {

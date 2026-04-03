@@ -450,8 +450,7 @@ export function WorkoutPage() {
     return (
         <div className={`stack stack--page ${activeSession ? 'stack--page-with-utility' : ''}`.trim()}>
             {activeSession ? (
-                <section className="page-header workout-header">
-                    <h2 className="workout-header__title">{t('nav.workout')}</h2>
+                <section className="page-header page-header--actions-only workout-header">
                     <button
                         className="button button--secondary button--auto"
                         disabled={saving}

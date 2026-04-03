@@ -333,11 +333,7 @@ button {
 .workout-header {
     align-items: center;
     flex-wrap: nowrap;
-}
-
-.workout-header__title {
-    margin: 0;
-    font-size: 1.7rem;
+    justify-content: flex-end;
 }
 
 .stack {

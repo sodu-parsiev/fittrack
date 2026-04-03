@@ -96,14 +96,15 @@ function playTimerSound() {
     }
 }
 
-function formatDateTime(value, locale, fallbackLabel) {
+function formatSessionStartTime(value, locale, fallbackLabel) {
     if (!value) {
         return fallbackLabel;
     }
 
     return new Intl.DateTimeFormat(locale, {
-        dateStyle: 'medium',
-        timeStyle: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
     }).format(new Date(value));
 }
 
@@ -449,7 +450,8 @@ export function WorkoutPage() {
     return (
         <div className={`stack stack--page ${activeSession ? 'stack--page-with-utility' : ''}`.trim()}>
             {activeSession ? (
-                <section className="page-header page-header--actions-only">
+                <section className="page-header workout-header">
+                    <h2 className="workout-header__title">{t('nav.workout')}</h2>
                     <button
                         className="button button--secondary button--auto"
                         disabled={saving}
@@ -526,17 +528,12 @@ export function WorkoutPage() {
                     ) : null}
 
                     <section className="session-started" aria-label={t('workout.summary')}>
-                        <span className="session-started__label">{t('workout.started')}</span>
                         <strong className="session-started__value">
-                            {formatDateTime(activeSession.startedAt, locale, t('common.justNow'))}
+                            {formatSessionStartTime(activeSession.startedAt, locale, t('common.justNow'))}
                         </strong>
                     </section>
 
                     <section className="panel">
-                        <div className="panel__header">
-                            <h3 className="panel__title">{t('workout.addExercise')}</h3>
-                        </div>
-
                         <form className="stack" onSubmit={handleAddExercise}>
                             <label className="field">
                                 <span>{t('workout.exerciseName')}</span>

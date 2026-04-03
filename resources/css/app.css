@@ -330,6 +330,16 @@ button {
     font-size: clamp(1.8rem, 2.8vw, 3rem);
 }
 
+.workout-header {
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+.workout-header__title {
+    margin: 0;
+    font-size: 1.7rem;
+}
+
 .stack {
     gap: 18px;
 }
@@ -998,6 +1008,11 @@ button {
     .history-exercise__header {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .workout-header {
+        flex-direction: row;
+        align-items: center;
     }
 
     .layout-header__controls {

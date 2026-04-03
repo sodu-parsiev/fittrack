@@ -8,11 +8,11 @@
 :root {
     --app-height: 100vh;
     --keyboard-inset: 0px;
-    --bg: #09101d;
-    --bg-soft: #101828;
-    --panel: rgba(15, 23, 42, 0.76);
-    --panel-strong: rgba(15, 23, 42, 0.92);
-    --stroke: rgba(148, 163, 184, 0.16);
+    --bg: #0b0f14;
+    --bg-soft: #111827;
+    --panel: #141b26;
+    --panel-strong: #171f2c;
+    --stroke: rgba(148, 163, 184, 0.2);
     --text: #f8fafc;
     --muted: #94a3b8;
     --accent: #2f7cff;
@@ -22,8 +22,8 @@
     --danger-soft: rgba(231, 76, 60, 0.16);
     --shadow: 0 24px 60px rgba(3, 7, 18, 0.45);
     --radius-lg: 28px;
-    --radius-md: 18px;
-    --radius-sm: 12px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
     --font-sans: 'Avenir Next', 'Segoe UI', 'Helvetica Neue', sans-serif;
     --font-mono: 'JetBrains Mono', 'SFMono-Regular', monospace;
 }
@@ -47,10 +47,7 @@ body {
     min-height: var(--app-height);
     font-family: var(--font-sans);
     overflow-x: hidden;
-    background:
-        radial-gradient(circle at top left, rgba(47, 124, 255, 0.22), transparent 26%),
-        radial-gradient(circle at top right, rgba(34, 197, 94, 0.12), transparent 18%),
-        linear-gradient(180deg, #0b1220 0%, #07111b 48%, #050c13 100%);
+    background: var(--bg);
     color: var(--text);
 }
 
@@ -104,8 +101,7 @@ button {
 .metric-pill {
     border: 1px solid var(--stroke);
     background: var(--panel);
-    backdrop-filter: blur(18px);
-    box-shadow: var(--shadow);
+    box-shadow: none;
 }
 
 .hero-panel,
@@ -372,9 +368,9 @@ button {
 
 .field--strong span {
     font-size: 0.8rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: #7dd3fc;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--muted);
 }
 
 .field span {
@@ -393,23 +389,20 @@ button {
     padding: 14px 16px;
     border: 1px solid rgba(148, 163, 184, 0.28);
     border-radius: var(--radius-sm);
-    background: rgba(15, 23, 42, 0.84);
+    background: #0f1622;
     color: var(--text);
     outline: none;
     transition:
         border-color 160ms ease,
         box-shadow 160ms ease,
-        transform 160ms ease,
         background-color 160ms ease;
     font-size: 16px;
 }
 
 .field input:focus,
 .field select:focus {
-    border-color: rgba(125, 211, 252, 0.8);
-    background: rgba(15, 23, 42, 0.9);
-    box-shadow: 0 0 0 3px rgba(125, 211, 252, 0.14);
-    transform: translateY(-1px);
+    border-color: rgba(47, 124, 255, 0.8);
+    box-shadow: 0 0 0 2px rgba(47, 124, 255, 0.2);
 }
 
 .field input:disabled,
@@ -473,29 +466,32 @@ button {
 .choice-row {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    gap: 0;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: #0f1622;
 }
 
 .choice-chip {
-    min-height: 44px;
+    min-height: 42px;
     padding: 10px 14px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    border-radius: var(--radius-sm);
-    background: rgba(15, 23, 42, 0.78);
-    color: #dbeafe;
-    font-weight: 600;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #cbd5e1;
+    font-weight: 500;
     cursor: pointer;
-    transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
+    transition: background-color 160ms ease, color 160ms ease;
 }
 
-.choice-chip:hover:not(:disabled) {
-    transform: translateY(-1px);
+.choice-chip + .choice-chip {
+    border-left: 1px solid rgba(148, 163, 184, 0.24);
 }
 
 .choice-chip--active {
-    border-color: rgba(125, 211, 252, 0.28);
-    background: rgba(47, 124, 255, 0.18);
-    color: var(--text);
+    background: rgba(47, 124, 255, 0.2);
+    color: #eff6ff;
 }
 
 .choice-chip:disabled {
@@ -504,11 +500,11 @@ button {
 }
 
 .field--strong input {
-    text-align: center;
-    font-size: clamp(1.35rem, 2.2vw, 1.9rem);
-    font-weight: 800;
-    letter-spacing: -0.04em;
-    padding-block: 18px;
+    text-align: left;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: normal;
+    padding-block: 14px;
 }
 
 .button {
@@ -517,26 +513,24 @@ button {
     justify-content: center;
     gap: 10px;
     width: 100%;
-    min-height: 48px;
-    padding: 14px 18px;
+    min-height: 50px;
+    padding: 14px 16px;
     border-radius: var(--radius-sm);
-    background: linear-gradient(135deg, #2f7cff 0%, #00b3ff 100%);
+    background: var(--accent);
     color: white;
     font-weight: 700;
     cursor: pointer;
-    transition: transform 160ms ease, opacity 160ms ease, box-shadow 160ms ease;
-    box-shadow: 0 14px 30px rgba(47, 124, 255, 0.34);
+    transition: opacity 160ms ease, background-color 160ms ease;
+    box-shadow: none;
 }
 
 .button:hover:not(:disabled) {
-    transform: translateY(-1px);
+    background: #246cea;
 }
 
 .button:focus-visible {
     outline: none;
-    box-shadow:
-        0 14px 30px rgba(47, 124, 255, 0.24),
-        0 0 0 3px rgba(125, 211, 252, 0.18);
+    box-shadow: 0 0 0 2px rgba(47, 124, 255, 0.24);
 }
 
 .button:disabled {
@@ -547,8 +541,9 @@ button {
 
 .button--secondary,
 .button--ghost {
-    background: rgba(148, 163, 184, 0.12);
+    background: #1f2937;
     box-shadow: none;
+    color: #e5e7eb;
 }
 
 .button--danger {
@@ -557,7 +552,7 @@ button {
 }
 
 .button--danger-soft {
-    background: rgba(231, 76, 60, 0.12);
+    background: transparent;
     color: #fecaca;
     border: 1px solid rgba(231, 76, 60, 0.24);
     box-shadow: none;
@@ -635,26 +630,64 @@ button {
 }
 
 .exercise-card {
-    padding: 22px;
+    padding: 18px;
     border-radius: var(--radius-md);
     min-width: 0;
 }
 
-.exercise-card__stats {
+.exercise-card__summary {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin: 12px 0 0;
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    background: #0f1622;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.exercise-card__summary-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
     gap: 12px;
-    margin: 18px 0 16px;
+}
+
+.exercise-card__summary dt {
+    color: var(--muted);
+    font-size: 0.86rem;
+}
+
+.exercise-card__summary dd {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.exercise-card__section {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.exercise-card__section-label {
+    font-size: 0.86rem;
+    color: var(--muted);
+}
+
+.exercise-card__adjustments {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.exercise-card__complete {
+    min-height: 54px;
+    font-size: 1rem;
 }
 
 .exercise-card__stat {
     min-width: 0;
-    padding: 14px 16px;
-    border-radius: 16px;
-    background:
-        linear-gradient(180deg, rgba(47, 124, 255, 0.14), rgba(47, 124, 255, 0.04)),
-        rgba(15, 23, 42, 0.72);
-    border: 1px solid rgba(125, 211, 252, 0.16);
+    padding: 0;
 }
 
 .exercise-card__stat-label {
@@ -698,23 +731,17 @@ button {
     line-height: 1.5;
 }
 
-.exercise-card__heading {
-    min-width: 0;
-}
-
 .exercise-card__inputs {
-    gap: 12px;
+    gap: 14px;
+    margin-top: 14px;
 }
 
 .exercise-card__mode {
-    margin-bottom: 12px;
+    margin-top: 14px;
 }
 
 .exercise-card__actions {
-    display: grid;
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.3fr) minmax(0, 0.95fr);
-    gap: 10px;
-    align-items: stretch;
+    grid-template-columns: 1fr;
 }
 
 .exercise-card__actions .button {
@@ -726,9 +753,9 @@ button {
 }
 
 .exercise-card__secondary {
-    margin-top: 14px;
-    display: flex;
-    justify-content: flex-end;
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(148, 163, 184, 0.14);
 }
 
 .badge-row {
@@ -875,7 +902,17 @@ button {
 }
 
 .workout-utility-bar {
-    display: none;
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    z-index: 40;
+    width: min(calc(100% - 20px), 420px);
+    display: block;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 14px 14px 0 0;
+    background: #111827;
+    transform: translateX(-50%);
 }
 
 :root.ios-keyboard-open .workout-utility-bar,
@@ -886,11 +923,11 @@ button {
 .workout-utility-bar__row,
 .workout-utility-bar__controls {
     display: grid;
-    gap: 6px;
+    gap: 10px;
 }
 
 .workout-utility-bar__row {
-    grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+    grid-template-columns: 1fr;
     align-items: center;
 }
 
@@ -898,10 +935,10 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 38px;
+    height: 42px;
     padding: 0 12px;
     border-radius: var(--radius-sm);
-    background: rgba(255, 255, 255, 0.06);
+    background: #0f1622;
     font-family: var(--font-mono);
     font-size: 1.05rem;
     font-weight: 800;
@@ -911,16 +948,11 @@ button {
 }
 
 .workout-utility-bar__controls {
-    grid-template-columns: repeat(4, 38px);
-    justify-content: end;
+    grid-template-columns: 1fr 1fr;
 }
 
 .workout-utility-bar__button {
-    justify-self: end;
-    width: 38px;
-    min-width: 38px;
-    min-height: 38px;
-    padding: 0;
+    min-height: 42px;
 }
 
 .scroll-dock {
@@ -1070,7 +1102,7 @@ button {
 
     .field-row,
     .button-row,
-    .exercise-card__stats {
+    .exercise-card__summary {
         grid-template-columns: 1fr;
     }
 
@@ -1079,43 +1111,16 @@ button {
     }
 
     .stack--page-with-utility {
-        padding-bottom: calc(88px + env(safe-area-inset-bottom) + var(--keyboard-inset));
-    }
-
-    .floating-timer {
-        display: none;
-    }
-
-    .workout-utility-bar {
-        position: fixed;
-        left: 50%;
-        bottom: 10px;
-        z-index: 40;
-        display: block;
-        width: min(calc(100% - 20px), 720px);
-        padding: 6px 10px;
-        border: 1px solid rgba(125, 211, 252, 0.18);
-        border-radius: 18px;
-        background:
-            linear-gradient(135deg, rgba(47, 124, 255, 0.16), rgba(16, 185, 129, 0.07)),
-            rgba(11, 18, 32, 0.92);
-        backdrop-filter: blur(18px);
-        box-shadow: 0 16px 34px rgba(3, 7, 18, 0.38);
-        transform: translateX(-50%);
-    }
-
-    .workout-utility-bar__display {
-        font-size: clamp(1rem, 5vw, 1.15rem);
-        padding-inline: 10px;
+        padding-bottom: calc(126px + env(safe-area-inset-bottom) + var(--keyboard-inset));
     }
 
     .workout-form__pair,
     .exercise-card__inputs {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
     }
 
-    .exercise-card__actions {
-        gap: 8px;
+    .exercise-card__adjustments {
+        grid-template-columns: 1fr;
     }
 
     .stack--page {
@@ -1144,21 +1149,7 @@ button {
         padding: 18px;
     }
 
-    .exercise-card__stats {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
-        margin: 14px 0;
-    }
-
-    .exercise-card__stat {
-        padding: 12px 14px;
-    }
-
     .exercise-card__secondary {
         margin-top: 12px;
-    }
-
-    .scroll-dock {
-        display: none;
     }
 }

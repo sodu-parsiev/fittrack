@@ -22,6 +22,7 @@ export function SessionExerciseCard({
             <div className="exercise-card__header">
                 <div className="exercise-card__heading">
                     <h3 className="exercise-card__summary-line">{summaryLine}</h3>
+                    <hr className="line-under-title"/>
                 </div>
             </div>
 

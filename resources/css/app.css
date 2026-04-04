@@ -1213,3 +1213,11 @@ button {
         display: none;
     }
 }
+
+.field-row.exercise-card__inputs {
+    margin-bottom: 15px;
+}
+
+.field.exercise-card__mode {
+    margin-bottom: 15px;
+}

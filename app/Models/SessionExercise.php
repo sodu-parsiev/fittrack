@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['workout_session_id', 'name', 'category', 'sort_order', 'current_weight', 'uses_self_weight', 'target_reps'])]
+#[Fillable(['workout_session_id', 'name', 'category', 'sort_order', 'current_weight', 'uses_self_weight', 'target_reps', 'target_duration_seconds'])]
 class SessionExercise extends Model
 {
     use HasFactory;
@@ -22,6 +22,7 @@ class SessionExercise extends Model
             'category' => MuscleGroup::class,
             'current_weight' => 'decimal:2',
             'uses_self_weight' => 'boolean',
+            'target_duration_seconds' => 'integer',
         ];
     }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\MuscleGroup;
 use App\Enums\WorkoutSessionStatus;
 use App\Models\SessionExercise;
 use App\Models\User;
@@ -82,13 +83,14 @@ class WorkoutSessionService
     }
 
     /**
-     * @param  array{name: string, category: mixed, current_weight?: mixed, uses_self_weight?: mixed, target_reps: mixed}  $attributes
+     * @param  array{name: string, category: mixed, current_weight?: mixed, uses_self_weight?: mixed, target_reps?: mixed, target_duration_seconds?: mixed}  $attributes
      */
     public function createExercise(WorkoutSession $session, array $attributes): WorkoutSession
     {
         $this->ensureSessionIsActive($session);
 
         $usesSelfWeight = $this->toBoolean($attributes['uses_self_weight'] ?? false);
+        $isCardio = ($attributes['category'] ?? null) === MuscleGroup::Cardio->value;
 
         $session->sessionExercises()->create([
             'name' => $attributes['name'],
@@ -96,20 +98,22 @@ class WorkoutSessionService
             'sort_order' => ((int) $session->sessionExercises()->max('sort_order')) + 1,
             'current_weight' => $this->resolveStoredWeight($usesSelfWeight, $attributes['current_weight'] ?? 0),
             'uses_self_weight' => $usesSelfWeight,
-            'target_reps' => $attributes['target_reps'],
+            'target_reps' => $this->resolveTargetReps($isCardio, $attributes['target_reps'] ?? null),
+            'target_duration_seconds' => $this->resolveTargetDuration($isCardio, $attributes['target_duration_seconds'] ?? null),
         ]);
 
         return $this->loadSession($session->fresh());
     }
 
     /**
-     * @param  array{name?: mixed, category?: mixed, current_weight?: mixed, uses_self_weight?: mixed, target_reps?: mixed}  $attributes
+     * @param  array{name?: mixed, category?: mixed, current_weight?: mixed, uses_self_weight?: mixed, target_reps?: mixed, target_duration_seconds?: mixed}  $attributes
      */
     public function updateExercise(SessionExercise $exercise, array $attributes): WorkoutSession
     {
         $this->ensureSessionIsActive($exercise->workoutSession);
 
         $updates = $attributes;
+        $isCardio = ($attributes['category'] ?? $exercise->category?->value) === MuscleGroup::Cardio->value;
 
         if (array_key_exists('uses_self_weight', $attributes)) {
             $updates['uses_self_weight'] = $this->toBoolean($attributes['uses_self_weight']);
@@ -121,6 +125,11 @@ class WorkoutSessionService
             }
         } elseif (array_key_exists('current_weight', $attributes)) {
             $updates['current_weight'] = $this->resolveStoredWeight((bool) $exercise->uses_self_weight, $attributes['current_weight'] ?? 0);
+        }
+
+        if (array_key_exists('category', $attributes) || array_key_exists('target_reps', $attributes) || array_key_exists('target_duration_seconds', $attributes)) {
+            $updates['target_reps'] = $this->resolveTargetReps($isCardio, $attributes['target_reps'] ?? $exercise->target_reps);
+            $updates['target_duration_seconds'] = $this->resolveTargetDuration($isCardio, $attributes['target_duration_seconds'] ?? $exercise->target_duration_seconds);
         }
 
         $exercise->fill($updates);
@@ -149,7 +158,7 @@ class WorkoutSessionService
     }
 
     /**
-     * @param  array{reps: mixed, weight?: mixed, uses_self_weight?: mixed}  $attributes
+     * @param  array{reps?: mixed, duration_seconds?: mixed, weight?: mixed, uses_self_weight?: mixed}  $attributes
      */
     public function addSet(SessionExercise $exercise, array $attributes): WorkoutSession
     {
@@ -170,7 +179,8 @@ class WorkoutSessionService
 
             $exercise->exerciseSets()->create([
                 'set_number' => ((int) $exercise->exerciseSets()->max('set_number')) + 1,
-                'reps' => $attributes['reps'],
+                'reps' => $this->resolveSetReps($exercise, $attributes),
+                'duration_seconds' => $this->resolveSetDuration($exercise, $attributes),
                 'weight' => $storedWeight,
                 'uses_self_weight' => $usesSelfWeight,
                 'completed_at' => now(),
@@ -210,6 +220,48 @@ class WorkoutSessionService
     private function toBoolean(mixed $value): bool
     {
         return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    private function resolveTargetReps(bool $isCardio, mixed $targetReps): int
+    {
+        if ($isCardio) {
+            return 1;
+        }
+
+        return (int) ($targetReps ?? 1);
+    }
+
+    private function resolveTargetDuration(bool $isCardio, mixed $targetDuration): ?int
+    {
+        if (! $isCardio) {
+            return null;
+        }
+
+        return (int) ($targetDuration ?? 0);
+    }
+
+    /**
+     * @param  array{reps?: mixed, duration_seconds?: mixed}  $attributes
+     */
+    private function resolveSetReps(SessionExercise $exercise, array $attributes): int
+    {
+        if ($exercise->category === MuscleGroup::Cardio) {
+            return 1;
+        }
+
+        return (int) ($attributes['reps'] ?? 1);
+    }
+
+    /**
+     * @param  array{duration_seconds?: mixed}  $attributes
+     */
+    private function resolveSetDuration(SessionExercise $exercise, array $attributes): ?int
+    {
+        if ($exercise->category !== MuscleGroup::Cardio) {
+            return null;
+        }
+
+        return (int) ($attributes['duration_seconds'] ?? 0);
     }
 
     /**

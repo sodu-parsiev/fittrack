@@ -20,12 +20,15 @@ class StoreSessionExerciseRequest extends FormRequest
      */
     public function rules(): array
     {
+        $isCardio = $this->input('category') === MuscleGroup::Cardio->value;
+
         return [
             'name' => ['required', 'string', 'max:120'],
             'category' => ['required', Rule::enum(MuscleGroup::class)],
             'uses_self_weight' => ['sometimes', 'boolean'],
             'current_weight' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
-            'target_reps' => ['required', 'integer', 'min:1', 'max:100'],
+            'target_reps' => [Rule::requiredIf(! $isCardio), 'nullable', 'integer', 'min:1', 'max:100'],
+            'target_duration_seconds' => [Rule::requiredIf($isCardio), 'nullable', 'integer', 'min:1', 'max:359999'],
         ];
     }
 }

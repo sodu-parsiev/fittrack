@@ -4,6 +4,7 @@ import { api } from '../bootstrap';
 import { SessionExerciseCard } from '../components/SessionExerciseCard';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
+import { formatDurationSecondsToMMSS, parseMMSSDuration } from '../lib/duration';
 import { getErrorMessage } from '../lib/errors';
 import { getMuscleGroupOptions } from '../lib/muscleGroups';
 
@@ -129,16 +130,24 @@ function formatTimerValue(value) {
 }
 
 function buildDraftSet(exercise, currentDraft = null) {
+    const isCardio = exercise.category === 'cardio';
+
     return {
         reps: currentDraft?.reps ?? String(exercise.targetReps),
+        duration: currentDraft?.duration ?? formatDurationSecondsToMMSS(exercise.targetDurationSeconds ?? 300),
         weight: currentDraft?.weight ?? String(exercise.currentWeight),
+        mode: isCardio ? 'duration' : 'reps',
     };
 }
 
 function resetDraftAfterSet(exercise, currentDraft = null) {
+    const isCardio = exercise.category === 'cardio';
+
     return {
         reps: String(exercise.targetReps),
+        duration: String(currentDraft?.duration ?? formatDurationSecondsToMMSS(exercise.targetDurationSeconds ?? 300)),
         weight: exercise.usesSelfWeight ? currentDraft?.weight ?? String(exercise.currentWeight) : String(exercise.currentWeight),
+        mode: isCardio ? 'duration' : 'reps',
     };
 }
 
@@ -154,6 +163,7 @@ export function WorkoutPage() {
         usesSelfWeight: false,
         currentWeight: '',
         targetReps: '8',
+        targetTime: '05:00',
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -245,6 +255,14 @@ export function WorkoutPage() {
             return;
         }
 
+        const isCardio = exerciseForm.category === 'cardio';
+        const targetDurationSeconds = isCardio ? parseMMSSDuration(exerciseForm.targetTime) : null;
+
+        if (isCardio && targetDurationSeconds === null) {
+            setError(t('workout.invalidTimeFormat'));
+            return;
+        }
+
         setSaving(true);
         setError('');
 
@@ -254,7 +272,9 @@ export function WorkoutPage() {
                 category: exerciseForm.category,
                 uses_self_weight: exerciseForm.usesSelfWeight,
                 current_weight: exerciseForm.usesSelfWeight ? null : Number(exerciseForm.currentWeight || 0),
-                target_reps: Number(exerciseForm.targetReps || 8),
+                ...(isCardio
+                    ? { target_duration_seconds: targetDurationSeconds }
+                    : { target_reps: Number(exerciseForm.targetReps || 8) }),
             });
 
             setActiveSession(response.data);
@@ -264,6 +284,7 @@ export function WorkoutPage() {
                 usesSelfWeight: false,
                 currentWeight: '',
                 targetReps: '8',
+                targetTime: '05:00',
             });
         } catch (requestError) {
             setError(getErrorMessage(requestError, t('workout.unableToAddExercise')));
@@ -315,14 +336,21 @@ export function WorkoutPage() {
 
     async function completeSet(exercise) {
         const draft = draftSets[exercise.id] ?? buildDraftSet(exercise);
+        const isCardio = exercise.category === 'cardio';
+        const durationSeconds = isCardio ? parseMMSSDuration(draft.duration ?? '') : null;
+
+        if (isCardio && durationSeconds === null) {
+            setError(t('workout.invalidTimeFormat'));
+            return;
+        }
 
         setSaving(true);
         setError('');
 
         try {
             const payload = {
-                reps: Number(draft.reps),
                 uses_self_weight: exercise.usesSelfWeight,
+                ...(isCardio ? { duration_seconds: durationSeconds } : { reps: Number(draft.reps) }),
             };
 
             if (!exercise.usesSelfWeight) {
@@ -638,20 +666,36 @@ export function WorkoutPage() {
                                 </label>
 
                                 <label className="field">
-                                    <span>{t('workout.targetReps')}</span>
-                                    <input
-                                        autoComplete="off"
-                                        id="exercise-target-reps-input"
-                                        inputMode="numeric"
-                                        min="1"
-                                        name="exerciseTargetReps"
-                                        type="number"
-                                        value={exerciseForm.targetReps}
-                                        onChange={(event) => setExerciseForm((current) => ({
-                                            ...current,
-                                            targetReps: event.target.value,
-                                        }))}
-                                    />
+                                    <span>{exerciseForm.category === 'cardio' ? t('workout.targetTime') : t('workout.targetReps')}</span>
+                                    {exerciseForm.category === 'cardio' ? (
+                                        <input
+                                            autoComplete="off"
+                                            id="exercise-target-time-input"
+                                            inputMode="text"
+                                            name="exerciseTargetTime"
+                                            type="text"
+                                            placeholder="MM:SS"
+                                            value={exerciseForm.targetTime}
+                                            onChange={(event) => setExerciseForm((current) => ({
+                                                ...current,
+                                                targetTime: event.target.value,
+                                            }))}
+                                        />
+                                    ) : (
+                                        <input
+                                            autoComplete="off"
+                                            id="exercise-target-reps-input"
+                                            inputMode="numeric"
+                                            min="1"
+                                            name="exerciseTargetReps"
+                                            type="number"
+                                            value={exerciseForm.targetReps}
+                                            onChange={(event) => setExerciseForm((current) => ({
+                                                ...current,
+                                                targetReps: event.target.value,
+                                            }))}
+                                        />
+                                    )}
                                 </label>
                             </div>
 

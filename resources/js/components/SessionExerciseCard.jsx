@@ -1,5 +1,6 @@
 import { formatMuscleGroup } from '../lib/muscleGroups';
 import { useTranslation } from '../contexts/LanguageContext';
+import { formatDurationSecondsToMMSS } from '../lib/duration';
 
 export function SessionExerciseCard({
     draft,
@@ -13,9 +14,13 @@ export function SessionExerciseCard({
 }) {
     const { language, t } = useTranslation();
     const categoryLabel = formatMuscleGroup(exercise.category, language);
+    const isCardio = exercise.category === 'cardio';
     const completedSets = exercise.sets.length;
     const totalSegments = Math.max(completedSets + 4, 12);
-    const summaryLine = `${exercise.name} / ${categoryLabel} / ${exercise.targetReps} / ${completedSets}`;
+    const targetMetric = isCardio
+        ? formatDurationSecondsToMMSS(exercise.targetDurationSeconds ?? 0)
+        : exercise.targetReps;
+    const summaryLine = `${exercise.name} / ${categoryLabel} / ${targetMetric} / ${completedSets}`;
 
     return (
         <article className="exercise-card exercise-card--active">
@@ -49,16 +54,17 @@ export function SessionExerciseCard({
 
             <div className="field-row exercise-card__inputs">
                 <label className="field field--strong">
-                    <span>{t('workout.repsDone')}</span>
+                    <span>{isCardio ? t('workout.timeDone') : t('workout.repsDone')}</span>
                     <input
                         autoComplete="off"
-                        id={`exercise-${exercise.id}-reps`}
-                        inputMode="numeric"
-                        type="number"
-                        min="1"
-                        name={`exerciseReps-${exercise.id}`}
-                        value={draft?.reps ?? exercise.targetReps}
-                        onChange={(event) => onChangeDraft(exercise.id, 'reps', event.target.value)}
+                        id={`exercise-${exercise.id}-${isCardio ? 'duration' : 'reps'}`}
+                        inputMode={isCardio ? 'text' : 'numeric'}
+                        type={isCardio ? 'text' : 'number'}
+                        min={isCardio ? undefined : '1'}
+                        name={`exercise${isCardio ? 'Duration' : 'Reps'}-${exercise.id}`}
+                        placeholder={isCardio ? 'MM:SS' : undefined}
+                        value={isCardio ? (draft?.duration ?? formatDurationSecondsToMMSS(exercise.targetDurationSeconds ?? 0)) : (draft?.reps ?? exercise.targetReps)}
+                        onChange={(event) => onChangeDraft(exercise.id, isCardio ? 'duration' : 'reps', event.target.value)}
                     />
                 </label>
 

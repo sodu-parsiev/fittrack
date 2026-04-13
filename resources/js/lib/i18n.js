@@ -133,9 +133,17 @@ const translations = {
             en: '{category} · Target {targetReps} reps, last load {weight}',
             ru: '{category} · Цель: {targetReps} повт., последний вес {weight}',
         },
+        cardioExerciseSummary: {
+            en: '{category} · Target {targetTime}',
+            ru: '{category} · Цель: {targetTime}',
+        },
         setEntry: {
             en: 'Set {number}: {reps} reps x {weight}',
             ru: 'Подход {number}: {reps} повт. x {weight}',
+        },
+        cardioSetEntry: {
+            en: 'Set {number}: {duration}',
+            ru: 'Подход {number}: {duration}',
         },
     },
     workout: {
@@ -162,6 +170,10 @@ const translations = {
         unableToSaveSet: {
             en: 'Unable to save that set.',
             ru: 'Не удалось сохранить подход.',
+        },
+        invalidTimeFormat: {
+            en: 'Time must be in MM:SS format.',
+            ru: 'Время должно быть в формате MM:SS.',
         },
         deleteExerciseConfirm: {
             en: 'Delete {name} from this workout?',
@@ -271,9 +283,17 @@ const translations = {
             en: 'Target reps',
             ru: 'Целевые повторы',
         },
+        targetTime: {
+            en: 'Target time',
+            ru: 'Целевое время',
+        },
         repsDone: {
             en: 'Reps done',
             ru: 'Повторы',
+        },
+        timeDone: {
+            en: 'Time done',
+            ru: 'Время',
         },
         load: {
             en: 'Load',

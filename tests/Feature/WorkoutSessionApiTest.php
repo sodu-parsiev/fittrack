@@ -90,7 +90,7 @@ class WorkoutSessionApiTest extends TestCase
                 'name' => 'Incline Walk',
                 'category' => 'cardio',
                 'uses_self_weight' => true,
-                'target_reps' => 1,
+                'target_duration_seconds' => 600,
             ]);
 
         $exerciseResponse
@@ -98,13 +98,14 @@ class WorkoutSessionApiTest extends TestCase
             ->assertJsonPath('exercises.0.category', 'cardio')
             ->assertJsonPath('exercises.0.categoryLabel', 'Cardio')
             ->assertJsonPath('exercises.0.usesSelfWeight', true)
-            ->assertJsonPath('exercises.0.currentWeight', 0);
+            ->assertJsonPath('exercises.0.currentWeight', 0)
+            ->assertJsonPath('exercises.0.targetDurationSeconds', 600);
 
         $exerciseId = $exerciseResponse->json('exercises.0.id');
 
         $setResponse = $this->actingAs($user, 'sanctum')
             ->postJson("/api/exercises/{$exerciseId}/sets", [
-                'reps' => 1,
+                'duration_seconds' => 420,
                 'uses_self_weight' => true,
             ]);
 
@@ -113,7 +114,8 @@ class WorkoutSessionApiTest extends TestCase
             ->assertJsonPath('totalSets', 1)
             ->assertJsonPath('exercises.0.usesSelfWeight', true)
             ->assertJsonPath('exercises.0.sets.0.weight', 0)
-            ->assertJsonPath('exercises.0.sets.0.usesSelfWeight', true);
+            ->assertJsonPath('exercises.0.sets.0.usesSelfWeight', true)
+            ->assertJsonPath('exercises.0.sets.0.durationSeconds', 420);
 
         $this->actingAs($user, 'sanctum')
             ->patchJson("/api/sessions/{$sessionId}", [
@@ -126,7 +128,55 @@ class WorkoutSessionApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('0.exercises.0.category', 'cardio')
             ->assertJsonPath('0.exercises.0.usesSelfWeight', true)
-            ->assertJsonPath('0.exercises.0.sets.0.usesSelfWeight', true);
+            ->assertJsonPath('0.exercises.0.sets.0.usesSelfWeight', true)
+            ->assertJsonPath('0.exercises.0.sets.0.durationSeconds', 420);
+    }
+
+    public function test_cardio_exercise_creation_requires_target_duration_seconds(): void
+    {
+        $user = User::factory()->create();
+        $session = WorkoutSession::query()->create([
+            'user_id' => $user->id,
+            'status' => 'active',
+            'started_at' => now(),
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/sessions/{$session->id}/exercises", [
+                'name' => 'Bike',
+                'category' => 'cardio',
+                'uses_self_weight' => true,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['target_duration_seconds']);
+    }
+
+    public function test_cardio_set_creation_requires_duration_seconds(): void
+    {
+        $user = User::factory()->create();
+        $session = WorkoutSession::query()->create([
+            'user_id' => $user->id,
+            'status' => 'active',
+            'started_at' => now(),
+        ]);
+        $exercise = SessionExercise::query()->create([
+            'workout_session_id' => $session->id,
+            'name' => 'Bike',
+            'category' => 'cardio',
+            'sort_order' => 1,
+            'current_weight' => 0,
+            'uses_self_weight' => true,
+            'target_reps' => 1,
+            'target_duration_seconds' => 600,
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/exercises/{$exercise->id}/sets", [
+                'reps' => 1,
+                'uses_self_weight' => true,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['duration_seconds']);
     }
 
     public function test_guest_user_can_run_a_workout_flow_without_history(): void

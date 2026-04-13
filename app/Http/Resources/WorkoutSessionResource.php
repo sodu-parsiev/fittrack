@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Enums\MuscleGroup;
 use App\Models\WorkoutSession;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -29,6 +30,10 @@ class WorkoutSessionResource extends JsonResource
                 $totalSets += $exercise->exerciseSets->count();
 
                 foreach ($exercise->exerciseSets as $set) {
+                    if ($exercise->category === MuscleGroup::Cardio) {
+                        continue;
+                    }
+
                     $totalVolume += $set->reps * (float) $set->weight;
                 }
             }

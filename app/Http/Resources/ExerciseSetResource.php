@@ -20,6 +20,7 @@ class ExerciseSetResource extends JsonResource
             'id' => $this->id,
             'setNumber' => $this->set_number,
             'reps' => $this->reps,
+            'durationSeconds' => $this->duration_seconds,
             'weight' => (float) $this->weight,
             'usesSelfWeight' => (bool) $this->uses_self_weight,
             'completedAt' => $this->completed_at?->toIso8601String(),

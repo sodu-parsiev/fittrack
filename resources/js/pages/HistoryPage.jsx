@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../bootstrap';
 import { useTranslation } from '../contexts/LanguageContext';
+import { formatDurationSecondsToMMSS } from '../lib/duration';
 import { getErrorMessage } from '../lib/errors';
 import { formatWeightLabel, formatWeightValue } from '../lib/exerciseWeight';
 import { formatMuscleGroup } from '../lib/muscleGroups';
@@ -83,36 +84,50 @@ export function HistoryPage() {
                             </summary>
 
                             <div className="history-card__content">
-                                {session.exercises.map((exercise) => (
+                                {session.exercises.map((exercise) => {
+                                    const isCardio = exercise.category === 'cardio';
+
+                                    return (
                                     <article className="history-exercise" key={exercise.id}>
                                         <div className="history-exercise__header">
                                             <h4>{exercise.name}</h4>
                                             <span>
-                                                {t('history.exerciseSummary', {
-                                                    category: formatMuscleGroup(exercise.category, language),
-                                                    targetReps: exercise.targetReps,
-                                                    weight: formatWeightLabel(
-                                                        exercise.currentWeight,
-                                                        exercise.usesSelfWeight,
-                                                        language,
-                                                    ),
-                                                })}
+                                                {isCardio
+                                                    ? t('history.cardioExerciseSummary', {
+                                                        category: formatMuscleGroup(exercise.category, language),
+                                                        targetTime: formatDurationSecondsToMMSS(exercise.targetDurationSeconds ?? 0),
+                                                    })
+                                                    : t('history.exerciseSummary', {
+                                                        category: formatMuscleGroup(exercise.category, language),
+                                                        targetReps: exercise.targetReps,
+                                                        weight: formatWeightLabel(
+                                                            exercise.currentWeight,
+                                                            exercise.usesSelfWeight,
+                                                            language,
+                                                        ),
+                                                    })}
                                             </span>
                                         </div>
 
                                         <ol className="set-list">
                                             {exercise.sets.map((set) => (
                                                 <li key={set.id}>
-                                                    {t('history.setEntry', {
-                                                        number: set.setNumber,
-                                                        reps: set.reps,
-                                                        weight: formatWeightLabel(set.weight, set.usesSelfWeight, language),
-                                                    })}
+                                                    {exercise.category === 'cardio'
+                                                        ? t('history.cardioSetEntry', {
+                                                            number: set.setNumber,
+                                                            duration: formatDurationSecondsToMMSS(set.durationSeconds ?? 0),
+                                                        })
+                                                        : t('history.setEntry', {
+                                                            number: set.setNumber,
+                                                            reps: set.reps,
+                                                            weight: formatWeightLabel(set.weight, set.usesSelfWeight, language),
+                                                        })}
                                                 </li>
                                             ))}
                                         </ol>
                                     </article>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </details>
                     ))}

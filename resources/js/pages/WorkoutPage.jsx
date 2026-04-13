@@ -517,7 +517,7 @@ export function WorkoutPage() {
                 <>
                     <section className="session-started session-started--inline" aria-label={t('workout.summary')}>
                         <button
-                            className="button button--secondary button--auto"
+                            className="button button--secondary"
                             disabled={saving}
                             onClick={finishWorkout}
                             type="button"

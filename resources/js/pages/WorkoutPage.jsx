@@ -523,7 +523,7 @@ export function WorkoutPage() {
                             type="button"
                         >
                             <FlagIcon />
-                            {formatSessionStartTime(activeSession.startedAt, locale, t('common.justNow'))} ->
+                            {formatSessionStartTime(activeSession.startedAt, locale, t('common.justNow'))} -
                             <span>{t('workout.finishWorkout')}</span>
                         </button>
                     </section>

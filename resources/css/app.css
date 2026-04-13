@@ -893,7 +893,8 @@ button {
 }
 
 .session-started--inline .button {
-    margin-left: auto;
+    width: 100%;
+    margin-left: 0;
 }
 
 .workout-utility-bar {

@@ -423,28 +423,39 @@ export function WorkoutPage() {
     const timerCanReset = timerRunning || timeLeft !== TIMER_START_SECONDS;
     const timerDisplayLabel = formatTimerValue(timeLeft);
     const muscleGroupOptions = getMuscleGroupOptions(language);
-    const currentExerciseId = activeSession?.exercises?.[activeSession.exercises.length - 1]?.id ?? null;
+    const currentExerciseId = useMemo(() => {
+        if (!activeSession?.exercises?.length) {
+            return null;
+        }
+
+        const currentExercise = activeSession.exercises.reduce((latest, exercise) => {
+            if (!latest) {
+                return exercise;
+            }
+
+            if ((exercise.sortOrder ?? 0) > (latest.sortOrder ?? 0)) {
+                return exercise;
+            }
+
+            return latest;
+        }, null);
+
+        return currentExercise?.id ?? null;
+    }, [activeSession?.exercises]);
     const orderedExercises = useMemo(() => {
         if (!activeSession?.exercises?.length) {
             return [];
         }
 
-        if (currentExerciseId === null) {
-            return activeSession.exercises;
-        }
-
         return [...activeSession.exercises].sort((left, right) => {
-            if (left.id === currentExerciseId) {
-                return -1;
+            const sortOrderDelta = (right.sortOrder ?? 0) - (left.sortOrder ?? 0);
+            if (sortOrderDelta !== 0) {
+                return sortOrderDelta;
             }
 
-            if (right.id === currentExerciseId) {
-                return 1;
-            }
-
-            return 0;
+            return right.id - left.id;
         });
-    }, [activeSession?.exercises, currentExerciseId]);
+    }, [activeSession?.exercises]);
 
     if (loading) {
         return (
@@ -504,6 +515,19 @@ export function WorkoutPage() {
                 </section>
             ) : (
                 <>
+                    <section className="session-started session-started--inline" aria-label={t('workout.summary')}>
+                        <button
+                            className="button button--secondary"
+                            disabled={saving}
+                            onClick={finishWorkout}
+                            type="button"
+                        >
+                            <FlagIcon />
+                            {formatSessionStartTime(activeSession.startedAt, locale, t('common.justNow'))} ->
+                            <span>{t('workout.finishWorkout')}</span>
+                        </button>
+                    </section>
+
                     {activeSession.exercises.length > 0 ? (
                         <div className="exercise-list">
                             {orderedExercises.map((exercise) => (
@@ -521,25 +545,6 @@ export function WorkoutPage() {
                             ))}
                         </div>
                     ) : null}
-
-                    <section className="session-started session-started--inline" aria-label={t('workout.summary')}>
-                        <div className="session-started__meta">
-                            <span className="session-started__label">STARTED:</span>
-                            <strong className="session-started__value">
-                                {formatSessionStartTime(activeSession.startedAt, locale, t('common.justNow'))}
-                            </strong>
-                        </div>
-                        <span aria-hidden="true" className="session-started__separator">|</span>
-                        <button
-                            className="button button--secondary button--auto"
-                            disabled={saving}
-                            onClick={finishWorkout}
-                            type="button"
-                        >
-                            <FlagIcon />
-                            <span>{t('workout.finishWorkout')}</span>
-                        </button>
-                    </section>
 
                     <section className="panel" ref={addExerciseRef}>
                         <form autoComplete="off" className="stack" onSubmit={handleAddExercise}>

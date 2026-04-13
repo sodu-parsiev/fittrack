@@ -11,6 +11,7 @@ import { getMuscleGroupOptions } from '../lib/muscleGroups';
 const TIMER_START_SECONDS = 60;
 const TIMER_OVERDUE_LIMIT_SECONDS = -180;
 const TIMER_SOUND = 'data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
+const TIMER_STORAGE_PREFIX = 'fittrack_timer';
 
 function IconBase({ children }) {
     return (
@@ -107,6 +108,61 @@ function playTimerSound() {
     }
 }
 
+function triggerVibration() {
+    try {
+        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+            navigator.vibrate(200);
+        }
+    } catch {
+        // Ignore vibration failures on unsupported or restricted environments.
+    }
+}
+
+function timerStorageKey(sessionId) {
+    return `${TIMER_STORAGE_PREFIX}:${sessionId}`;
+}
+
+function readStoredTimer(sessionId) {
+    try {
+        const raw = window.localStorage.getItem(timerStorageKey(sessionId));
+        if (!raw) {
+            return null;
+        }
+
+        const parsed = JSON.parse(raw);
+        if (
+            typeof parsed?.startedAtMs !== 'number'
+            || typeof parsed?.baseSeconds !== 'number'
+            || typeof parsed?.lastVibrationMinute !== 'number'
+        ) {
+            return null;
+        }
+
+        return {
+            startedAtMs: parsed.startedAtMs,
+            baseSeconds: parsed.baseSeconds,
+            lastVibrationMinute: parsed.lastVibrationMinute,
+        };
+    } catch {
+        return null;
+    }
+}
+
+function writeStoredTimer(sessionId, timerState) {
+    window.localStorage.setItem(timerStorageKey(sessionId), JSON.stringify(timerState));
+}
+
+function clearStoredTimer(sessionId) {
+    window.localStorage.removeItem(timerStorageKey(sessionId));
+}
+
+function getTimeLeftFromTimer(timerState, nowMs = Date.now()) {
+    const elapsedSeconds = Math.floor((nowMs - timerState.startedAtMs) / 1000);
+    const rawTimeLeft = timerState.baseSeconds - elapsedSeconds;
+
+    return Math.max(TIMER_OVERDUE_LIMIT_SECONDS, rawTimeLeft);
+}
+
 function formatSessionStartTime(value, locale, fallbackLabel) {
     if (!value) {
         return fallbackLabel;
@@ -169,7 +225,7 @@ export function WorkoutPage() {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [timeLeft, setTimeLeft] = useState(TIMER_START_SECONDS);
-    const [timerRunning, setTimerRunning] = useState(false);
+    const [timerState, setTimerState] = useState(null);
     const addExerciseRef = useRef(null);
 
     useEffect(() => {
@@ -194,28 +250,78 @@ export function WorkoutPage() {
     }, [activeSession]);
 
     useEffect(() => {
-        if (!timerRunning) {
+        const sessionId = activeSession?.id;
+
+        if (!sessionId) {
+            setTimerState(null);
+            setTimeLeft(TIMER_START_SECONDS);
+            return;
+        }
+
+        const restoredTimer = readStoredTimer(sessionId);
+        if (!restoredTimer) {
+            setTimerState(null);
+            setTimeLeft(TIMER_START_SECONDS);
+            return;
+        }
+
+        const elapsedMinutes = Math.floor(Math.max(0, Date.now() - restoredTimer.startedAtMs) / 60000);
+        const hydratedTimer = {
+            ...restoredTimer,
+            lastVibrationMinute: Math.max(restoredTimer.lastVibrationMinute, elapsedMinutes),
+        };
+        const restoredTimeLeft = getTimeLeftFromTimer(hydratedTimer);
+
+        if (restoredTimeLeft <= TIMER_OVERDUE_LIMIT_SECONDS) {
+            clearStoredTimer(sessionId);
+            setTimerState(null);
+            setTimeLeft(TIMER_OVERDUE_LIMIT_SECONDS);
+            return;
+        }
+
+        setTimerState(hydratedTimer);
+        setTimeLeft(restoredTimeLeft);
+    }, [activeSession?.id]);
+
+    useEffect(() => {
+        const sessionId = activeSession?.id;
+
+        if (!sessionId || !timerState) {
             return undefined;
         }
 
         const interval = window.setInterval(() => {
+            const nextTimeLeft = getTimeLeftFromTimer(timerState);
+
             setTimeLeft((current) => {
-                if (current === 1) {
+                if (current > 0 && nextTimeLeft <= 0) {
                     playTimerSound();
                 }
 
-                if (current <= TIMER_OVERDUE_LIMIT_SECONDS) {
-                    window.clearInterval(interval);
-                    setTimerRunning(false);
-                    return TIMER_OVERDUE_LIMIT_SECONDS;
-                }
-
-                return current - 1;
+                return nextTimeLeft;
             });
+
+            const elapsedMinutes = Math.floor(Math.max(0, Date.now() - timerState.startedAtMs) / 60000);
+            if (elapsedMinutes >= 1 && elapsedMinutes > timerState.lastVibrationMinute) {
+                triggerVibration();
+                const nextTimerState = {
+                    ...timerState,
+                    lastVibrationMinute: elapsedMinutes,
+                };
+                setTimerState(nextTimerState);
+                writeStoredTimer(sessionId, nextTimerState);
+            }
+
+            if (nextTimeLeft <= TIMER_OVERDUE_LIMIT_SECONDS) {
+                window.clearInterval(interval);
+                clearStoredTimer(sessionId);
+                setTimerState(null);
+                setTimeLeft(TIMER_OVERDUE_LIMIT_SECONDS);
+            }
         }, 1000);
 
         return () => window.clearInterval(interval);
-    }, [timerRunning]);
+    }, [timerState, activeSession?.id]);
 
     async function loadActiveSession() {
         setLoading(true);
@@ -406,6 +512,9 @@ export function WorkoutPage() {
                 status: 'completed',
             });
 
+            clearStoredTimer(activeSession.id);
+            setTimerState(null);
+            setTimeLeft(TIMER_START_SECONDS);
             setActiveSession(null);
             if (user) {
                 navigate('/app/history');
@@ -418,12 +527,29 @@ export function WorkoutPage() {
     }
 
     function startTimer() {
+        const sessionId = activeSession?.id;
+        if (!sessionId) {
+            return;
+        }
+
+        const nextTimerState = {
+            startedAtMs: Date.now(),
+            baseSeconds: TIMER_START_SECONDS,
+            lastVibrationMinute: 0,
+        };
+
         setTimeLeft(TIMER_START_SECONDS);
-        setTimerRunning(true);
+        setTimerState(nextTimerState);
+        writeStoredTimer(sessionId, nextTimerState);
     }
 
     function resetTimer() {
-        setTimerRunning(false);
+        const sessionId = activeSession?.id;
+        if (sessionId) {
+            clearStoredTimer(sessionId);
+        }
+
+        setTimerState(null);
         setTimeLeft(TIMER_START_SECONDS);
     }
 
@@ -448,6 +574,7 @@ export function WorkoutPage() {
         });
     }
 
+    const timerRunning = timerState !== null;
     const timerCanReset = timerRunning || timeLeft !== TIMER_START_SECONDS;
     const timerDisplayLabel = formatTimerValue(timeLeft);
     const muscleGroupOptions = getMuscleGroupOptions(language);
@@ -506,7 +633,7 @@ export function WorkoutPage() {
                     <div className="floating-timer__actions" role="group" aria-label={t('workout.restTimerControls')}>
                         <button
                             className="button button--compact floating-timer__button"
-                            disabled={timerRunning}
+                            disabled={timerState !== null}
                             onClick={startTimer}
                             type="button"
                         >
@@ -728,7 +855,7 @@ export function WorkoutPage() {
                                 <button
                                     aria-label={t('workout.startTimer')}
                                     className="button button--compact button--icon-only workout-utility-bar__button"
-                                    disabled={timerRunning}
+                                    disabled={timerState !== null}
                                     onClick={startTimer}
                                     title={t('workout.startTimer')}
                                     type="button"
